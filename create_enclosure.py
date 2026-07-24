@@ -2,17 +2,14 @@
 # dependencies = []
 # ///
 """
-Ultra-Modern Desktop Enclosure Generator for Blender (bpy)
-Features an ultra-modern case design with 3 status LEDs (Red, Green, Blue), 
-sleek chamfered geometry, smoked acrylic lid, LED bezel panel, rubber feet, and M3 screws:
-1. Modern Enclosure Base with 3mm rounded corners, side accent channels, and rubber feet (Space Charcoal)
-2. Ultra-Modern Top Lid with chamfered edges, smoked finish, and recessed LED bezel panel (Smoked Polycarbonate)
-3. 3x Status Indicator LEDs with Emissive Glow (Red, Green, Blue) in metallic bezel mounts
-4. LM2596 Buck Converter PCB (Royal Blue) with 2x M3 mounting holes
-5. MAX3232 RS232 PCB (Teal) with DB9 connector
-6. ESP32 DevKit V1 PCB (Matte Black)
-7. 10x Brass Threaded Standoff Inserts
-8. 14x 3D M3 Stainless Steel Screws
+Modern 3D Printed Desktop Enclosure Generator for Blender (bpy)
+Generates clean 3D-printable enclosure models with 3x physical 3.2mm LED cutout holes in the top lid:
+1. Enclosure Base with 2mm rounded corners, internal standoff posts, DB9 & Micro-USB port cutouts
+2. Enclosure Top Lid with 3x physical 3.2mm LED through-hole cutouts (for Red, Green, Blue 3mm LEDs), potentiometer hole & vent grid
+3. LM2596 Buck Converter PCB mockup (Royal Blue)
+4. MAX3232 RS232 PCB mockup (Teal)
+5. ESP32 DevKit V1 PCB mockup (Matte Black)
+6. 14x 3D M3 Stainless Steel Mounting Screws
 """
 
 import socket
@@ -36,7 +33,7 @@ for collection in [bpy.data.meshes, bpy.data.materials]:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Modern Material Palette & Emissive LEDs
+# Material Palette
 # ---------------------------------------------------------
 def create_color_material(name, color, metallic=0.0, roughness=0.3):
     mat = bpy.data.materials.get(name)
@@ -52,32 +49,10 @@ def create_color_material(name, color, metallic=0.0, roughness=0.3):
                 bsdf.inputs['Roughness'].default_value = roughness
     return mat
 
-def create_emissive_material(name, color, strength=8.0):
-    mat = bpy.data.materials.get(name)
-    if not mat:
-        mat = bpy.data.materials.new(name=name)
-        mat.use_nodes = True
-        bsdf = mat.node_tree.nodes.get('Principled BSDF')
-        if bsdf:
-            bsdf.inputs['Base Color'].default_value = color
-            if 'Emission Color' in bsdf.inputs:
-                bsdf.inputs['Emission Color'].default_value = color
-            elif 'Emission' in bsdf.inputs:
-                bsdf.inputs['Emission'].default_value = color
-            if 'Emission Strength' in bsdf.inputs:
-                bsdf.inputs['Emission Strength'].default_value = strength
-    return mat
-
 # Case Materials
 mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.04, 0.05, 0.07, 1.0), metallic=0.35, roughness=0.20)
 mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.10, 0.12, 0.16, 1.0), metallic=0.45, roughness=0.10)
-mat_led_bezel      = create_color_material("Mat_LED_Bezel", (0.02, 0.02, 0.03, 1.0), metallic=0.80, roughness=0.15)
 mat_rubber_feet    = create_color_material("Mat_Rubber_Feet", (0.02, 0.02, 0.02, 1.0), metallic=0.0, roughness=0.80)
-
-# 3 Emissive Status LEDs
-mat_led_red   = create_emissive_material("Mat_LED_Red",   (1.0, 0.05, 0.05, 1.0), strength=10.0)
-mat_led_green = create_emissive_material("Mat_LED_Green", (0.05, 1.0, 0.15, 1.0), strength=10.0)
-mat_led_blue  = create_emissive_material("Mat_LED_Blue",  (0.05, 0.35, 1.0, 1.0), strength=10.0)
 
 # PCB & Hardware Materials
 mat_lm2596         = create_color_material("Mat_LM2596_Blue", (0.02, 0.18, 0.75, 1.0), metallic=0.10, roughness=0.20)
@@ -143,7 +118,7 @@ inner_w = outer_w - 2 * wall_t
 inner_h = outer_h - floor_t
 
 # ---------------------------------------------------------
-# 1. Modern Sleek Enclosure Base Body
+# 1. 3D Printable Enclosure Base Body
 # ---------------------------------------------------------
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, outer_h / 2.0))
 base_obj = bpy.context.active_object
@@ -169,7 +144,7 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
-# Futuristic Side Ergonomic Accent Ribs / Grooves
+# Side Ergonomic Accent Ribs / Grooves
 for side_x in [-outer_l / 2.0, outer_l / 2.0]:
     for k in range(-3, 4):
         gy = k * 6.5
@@ -301,7 +276,7 @@ bpy.ops.object.modifier_apply(modifier="Bevel_Base")
 # ---------------------------------------------------------
 # 3. Port Cutouts (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
+# DB9 Cutout on Front Wall
 db9_w, db9_h = 31.5, 14.0
 db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 15.0mm
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
@@ -318,7 +293,7 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Cutout")
 bpy.data.objects.remove(db9_cutter, do_unlink=True)
 
-# Micro-USB Cutout on Right Side Wall (aligned with ESP32 at Y = 0.0)
+# Micro-USB Cutout on Right Side Wall
 usb_w, usb_h = 10.5, 7.5
 usb_y_pos = esp_cy
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, usb_y_pos, floor_t + 4.0 + usb_h / 2.0))
@@ -336,10 +311,11 @@ bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 4. Ultra-Modern Top Lid with Recessed LED Bezel Panel & 3 Status LEDs
+# 4. Printable Top Lid with 3x 3.2mm LED Cutout Holes
 # ---------------------------------------------------------
 lid_h = 2.5
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
+lid_z_top = lid_z + lid_h / 2.0
 
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z))
 lid_obj = bpy.context.active_object
@@ -410,41 +386,26 @@ bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
 # ---------------------------------------------------------
-# Modern Recessed LED Bezel Panel & 3 Emissive LEDs (Red, Green, Blue)
+# 3x PHYSICAL LED CUTOUT HOLES (3.2mm Diameter) IN TOP LID (NO LED MOCKUPS)
 # ---------------------------------------------------------
 led_panel_y = -22.0
-led_z_top = lid_z + lid_h / 2.0
+led_hole_xs = [-11.0, 0.0, 11.0]
 
-# Recessed LED Panel Strip Box
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, led_z_top + 0.3))
-led_panel = bpy.context.active_object
-led_panel.name = "LED_Bezel_Panel_Strip"
-led_panel.scale = (36.0, 9.0, 1.0)
-bpy.ops.object.transform_apply(scale=True)
-led_panel.data.materials.append(mat_led_bezel)
-
-# 3 Status Indicator LEDs (Red = Power, Green = Status/TX, Blue = Link/RX)
-led_specs = [
-    ("LED_Status_Red_Power",   -11.0, mat_led_red),
-    ("LED_Status_Green_TX",      0.0, mat_led_green),
-    ("LED_Status_Blue_RX",     11.0, mat_led_blue)
-]
-
-for led_name, lx, led_mat in led_specs:
-    # Metallic Bezel Mount Ring
-    bpy.ops.mesh.primitive_cylinder_add(radius=2.2, depth=1.6, location=(lx, led_panel_y, led_z_top + 0.8))
-    bz_ring = bpy.context.active_object
-    bz_ring.name = f"{led_name}_Bezel"
-    bz_ring.data.materials.append(mat_led_bezel)
+for idx, lx in enumerate(led_hole_xs):
+    bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 3.0, location=(lx, led_panel_y, lid_z))
+    led_cutter = bpy.context.active_object
     
-    # 3mm Emissive LED Lens Dome
-    bpy.ops.mesh.primitive_cylinder_add(radius=1.5, depth=2.4, location=(lx, led_panel_y, led_z_top + 1.2))
-    led_dome = bpy.context.active_object
-    led_dome.name = led_name
-    led_dome.data.materials.append(led_mat)
+    mod_led = lid_obj.modifiers.new(name=f"LED_Cutout_Hole_{idx+1}", type='BOOLEAN')
+    mod_led.operation = 'DIFFERENCE'
+    mod_led.object = led_cutter
+    bpy.ops.object.select_all(action='DESELECT')
+    lid_obj.select_set(True)
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier=f"LED_Cutout_Hole_{idx+1}")
+    bpy.data.objects.remove(led_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 5. Component Mockups (LM2596, MAX3232, ESP32)
+# 5. Component PCB Mockups (Clearance Reference Only)
 # ---------------------------------------------------------
 pcb_thickness = 2.0
 pcb_z_center = floor_t + standoff_h + pcb_thickness / 2.0  # Z = 7.0mm
@@ -520,7 +481,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Ultra-modern case generated with 3 status LEDs (Red, Green, Blue), rubber feet, smoked acrylic lid, and M3 screws.",
+    "message": "Printable enclosure generated with clean 3.2mm LED cutout holes only. All LED mockup objects removed.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

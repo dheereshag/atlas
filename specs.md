@@ -1,6 +1,6 @@
 # Hardware Module Specifications & System Interconnection Guide
 
-Quick reference guide for mechanical dimensions, system power architecture, pin mappings, screw hole specifications, and enclosure mounting requirements for the 3-module system.
+Quick reference guide for mechanical dimensions, system power architecture, pin mappings, screw hole specifications, status indicators, and enclosure mounting requirements for the 3-module system.
 
 ---
 
@@ -89,24 +89,33 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 
 ---
 
-## 6. Enclosure Design Parameters & Clearance Specs
+## 6. Enclosure Design Parameters, Status LEDs & Clearance Specs
 
 * **Enclosure Inner Volume Target**: $\ge 85\text{ mm (L)} \times 65\text{ mm (W)} \times 30\text{ mm (H)}$
 * **Wall Thickness**: $2.0\text{ mm}$ minimum (standard FDM print strength)
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
+* **Modern Case Aesthetics & Materials**:
+  - **Main Base**: Space Charcoal Anodized finish with $2.0\text{ mm}$ chamfered outer edges and 7 vertical side accent channels per side.
+  - **Top Lid**: Smoked Polycarbonate finish with $1.6\text{ mm}$ edge chamfers and hexagonal thermal ventilation grid.
+  - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
+* **3x Status Indicator LEDs (Top Lid Front Panel)**:
+  1. **Red LED (`Power`)**: $3.0\text{ mm}$ dome, mounted at `X = -11.0 mm, Y = -22.0 mm` with metallic bezel ring.
+  2. **Green LED (`Status / TX`)**: $3.0\text{ mm}$ dome, mounted at `X = 0.0 mm, Y = -22.0 mm` with metallic bezel ring.
+  3. **Blue LED (`Link / RX`)**: $3.0\text{ mm}$ dome, mounted at `X = +11.0 mm, Y = -22.0 mm` with metallic bezel ring.
+  - **Indicator Panel**: Recessed black bezel strip ($36.0\text{ mm} \times 9.0\text{ mm}$) framing all 3 LEDs.
 * **Non-Overlapping Internal Layout Zones**:
   1. **MAX3232 Module (Front Left)**: Centered at `X = -20.0 mm, Y = -16.0 mm`. Bounding box: `[-36.0 to -4.0 mm, -32.5 to 0.5 mm]`.
   2. **LM2596 Converter (Back Left)**: Centered at `X = -18.0 mm, Y = +18.0 mm`. Bounding box: `[-39.6 to +3.6 mm, +7.2 to +28.8 mm]`.
   3. **ESP32 DevKit Board (Right Side)**: Centered at `X = +24.0 mm, Y = 0.0 mm`. Bounding box: `[+9.75 to +38.25 mm, -25.75 to +25.75 mm]`.
 * **External Cutouts Required**:
-  1. **DB9 Female Connector Cutout**: $31.0\text{ mm} \times 15.5\text{ mm}$ on the front wall (`X = -20.0 mm, Y = -35.0 mm`) for MAX3232 DB9 connector.
-  2. **ESP32 Micro-USB Port Cutout**: $10.0\text{ mm} \times 7.0\text{ mm}$ on the right side wall (`X = +45.0 mm, Y = 0.0 mm`) for USB flashing/debugging access.
+  1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -20.0 mm, Y = -35.0 mm`) for MAX3232 DB9 connector.
+  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the right side wall (`X = +45.0 mm, Y = 0.0 mm`) for USB flashing/debugging access.
   3. **Ventilation / Tuning Access**: Top lid potentiometer access hole centered over LM2596 (`X = -18.0 mm, Y = +18.0 mm`).
 * **Internal Standoff Posts & Screw Holes**:
   - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
-  - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, $2.8\text{ mm}$ pilot hole) at diagonal positions (`(-36.0, +8.0)` & `(0.0, +28.0)`).
-  - **MAX3232 Module**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, $2.8\text{ mm}$ pilot hole) at 4 corner positions (`(-33.5, -29.0)`, `(-6.5, -29.0)`, `(-33.5, -3.0)`, `(-6.5, -3.0)`).
-  - **ESP32 Board**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, $2.8\text{ mm}$ pilot hole) at 4 corner positions (`(+12.25, -23.25)`, `(+35.75, -23.25)`, `(+12.25, +23.25)`, `(+35.75, +23.25)`).
+  - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-36.0, +8.0)` & `(0.0, +28.0)`).
+  - **MAX3232 Module**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.
+  - **ESP32 Board**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.
 * **Screw Fastener Summary (Total 14x M3 Screws)**:
   - 4x M3 x 8mm screws for Enclosure Top Lid
   - 2x M3 x 6mm screws for LM2596 module

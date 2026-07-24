@@ -2,15 +2,17 @@
 # dependencies = []
 # ///
 """
-Custom 3D Printed Desktop Enclosure Generator for Blender (bpy)
-Generates color-coded objects with non-overlapping module layout, screw mounting holes & 3D M3 screws:
-1. Enclosure Base with internal standoff posts for all modules (Dark Charcoal)
-2. Enclosure Top Lid with ventilation & corner screw holes (Slate Grey)
-3. LM2596 Buck Converter PCB with 2x M3 mounting holes (Royal Blue)
-4. MAX3232 RS232 PCB with 4x M3 mounting holes (Teal)
-5. MAX3232 DB9 Connector Header sitting on top of PCB front edge (Metallic Silver)
-6. ESP32 DevKit V1 PCB with 4x M3 mounting holes (Matte Black)
-7. 14x 3D M3 Pan-Head Mounting Screws (Polished Steel)
+Ultra-Modern Desktop Enclosure Generator for Blender (bpy)
+Features an ultra-modern case design with 3 status LEDs (Red, Green, Blue), 
+sleek chamfered geometry, smoked acrylic lid, LED bezel panel, rubber feet, and M3 screws:
+1. Modern Enclosure Base with 3mm rounded corners, side accent channels, and rubber feet (Space Charcoal)
+2. Ultra-Modern Top Lid with chamfered edges, smoked finish, and recessed LED bezel panel (Smoked Polycarbonate)
+3. 3x Status Indicator LEDs with Emissive Glow (Red, Green, Blue) in metallic bezel mounts
+4. LM2596 Buck Converter PCB (Royal Blue) with 2x M3 mounting holes
+5. MAX3232 RS232 PCB (Teal) with DB9 connector
+6. ESP32 DevKit V1 PCB (Matte Black)
+7. 10x Brass Threaded Standoff Inserts
+8. 14x 3D M3 Stainless Steel Screws
 """
 
 import socket
@@ -20,6 +22,7 @@ import sys
 BLENDER_ENCLOSURE_SCRIPT = """
 import bpy
 import os
+import math
 
 # ---------------------------------------------------------
 # 0. Clean Existing Scene
@@ -33,7 +36,7 @@ for collection in [bpy.data.meshes, bpy.data.materials]:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Distinct Color Materials
+# Modern Material Palette & Emissive LEDs
 # ---------------------------------------------------------
 def create_color_material(name, color, metallic=0.0, roughness=0.3):
     mat = bpy.data.materials.get(name)
@@ -49,13 +52,41 @@ def create_color_material(name, color, metallic=0.0, roughness=0.3):
                 bsdf.inputs['Roughness'].default_value = roughness
     return mat
 
-mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.08, 0.09, 0.12, 1.0), metallic=0.0, roughness=0.35)
-mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.18, 0.22, 0.28, 1.0), metallic=0.0, roughness=0.30)
-mat_lm2596         = create_color_material("Mat_LM2596_Blue", (0.02, 0.15, 0.70, 1.0), metallic=0.1, roughness=0.20)
-mat_max3232        = create_color_material("Mat_MAX3232_Teal", (0.0, 0.40, 0.48, 1.0), metallic=0.1, roughness=0.20)
-mat_db9_header     = create_color_material("Mat_DB9_SilverMetal", (0.85, 0.85, 0.88, 1.0), metallic=0.9, roughness=0.15)
+def create_emissive_material(name, color, strength=8.0):
+    mat = bpy.data.materials.get(name)
+    if not mat:
+        mat = bpy.data.materials.new(name=name)
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes.get('Principled BSDF')
+        if bsdf:
+            bsdf.inputs['Base Color'].default_value = color
+            if 'Emission Color' in bsdf.inputs:
+                bsdf.inputs['Emission Color'].default_value = color
+            elif 'Emission' in bsdf.inputs:
+                bsdf.inputs['Emission'].default_value = color
+            if 'Emission Strength' in bsdf.inputs:
+                bsdf.inputs['Emission Strength'].default_value = strength
+    return mat
+
+# Case Materials
+mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.04, 0.05, 0.07, 1.0), metallic=0.35, roughness=0.20)
+mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.10, 0.12, 0.16, 1.0), metallic=0.45, roughness=0.10)
+mat_led_bezel      = create_color_material("Mat_LED_Bezel", (0.02, 0.02, 0.03, 1.0), metallic=0.80, roughness=0.15)
+mat_rubber_feet    = create_color_material("Mat_Rubber_Feet", (0.02, 0.02, 0.02, 1.0), metallic=0.0, roughness=0.80)
+
+# 3 Emissive Status LEDs
+mat_led_red   = create_emissive_material("Mat_LED_Red",   (1.0, 0.05, 0.05, 1.0), strength=10.0)
+mat_led_green = create_emissive_material("Mat_LED_Green", (0.05, 1.0, 0.15, 1.0), strength=10.0)
+mat_led_blue  = create_emissive_material("Mat_LED_Blue",  (0.05, 0.35, 1.0, 1.0), strength=10.0)
+
+# PCB & Hardware Materials
+mat_lm2596         = create_color_material("Mat_LM2596_Blue", (0.02, 0.18, 0.75, 1.0), metallic=0.10, roughness=0.20)
+mat_max3232        = create_color_material("Mat_MAX3232_Teal", (0.0, 0.45, 0.50, 1.0), metallic=0.10, roughness=0.20)
+mat_db9_header     = create_color_material("Mat_DB9_SilverMetal", (0.85, 0.85, 0.88, 1.0), metallic=0.90, roughness=0.15)
+mat_db9_plastic    = create_color_material("Mat_DB9_BluePlastic", (0.03, 0.20, 0.70, 1.0), metallic=0.05, roughness=0.30)
 mat_esp32          = create_color_material("Mat_ESP32_MatteBlack", (0.015, 0.015, 0.015, 1.0), metallic=0.05, roughness=0.25)
-mat_m3_screw       = create_color_material("Mat_M3_SteelScrew", (0.80, 0.82, 0.85, 1.0), metallic=0.95, roughness=0.10)
+mat_m3_screw       = create_color_material("Mat_M3_SteelScrew", (0.90, 0.92, 0.95, 1.0), metallic=0.95, roughness=0.10)
+mat_brass_insert   = create_color_material("Mat_Brass_Insert", (0.85, 0.65, 0.20, 1.0), metallic=0.90, roughness=0.20)
 
 # Helper function to create 3D M3 Screw
 def create_m3_screw(name, x, y, head_z, shaft_len=6.0):
@@ -63,15 +94,12 @@ def create_m3_screw(name, x, y, head_z, shaft_len=6.0):
     head_r = 2.75
     shaft_r = 1.4
     
-    # Screw Head
     bpy.ops.mesh.primitive_cylinder_add(radius=head_r, depth=head_h, location=(x, y, head_z + head_h/2.0))
     s_head = bpy.context.active_object
     
-    # Screw Shaft
     bpy.ops.mesh.primitive_cylinder_add(radius=shaft_r, depth=shaft_len, location=(x, y, head_z - shaft_len/2.0))
     s_shaft = bpy.context.active_object
     
-    # Join Head and Shaft
     mod = s_head.modifiers.new(name="Join_Shaft", type='BOOLEAN')
     mod.operation = 'UNION'
     mod.object = s_shaft
@@ -82,6 +110,23 @@ def create_m3_screw(name, x, y, head_z, shaft_len=6.0):
     s_head.name = name
     s_head.data.materials.append(mat_m3_screw)
     return s_head
+
+# Helper function to create Brass Standoff Thread Insert collar
+def create_brass_insert(name, x, y, z):
+    bpy.ops.mesh.primitive_cylinder_add(radius=2.1, depth=1.5, location=(x, y, z - 0.75))
+    ring = bpy.context.active_object
+    ring.name = name
+    
+    bpy.ops.mesh.primitive_cylinder_add(radius=1.5, depth=2.0, location=(x, y, z - 0.75))
+    h = bpy.context.active_object
+    
+    mod = ring.modifiers.new(name="Hole", type='BOOLEAN')
+    mod.operation = 'DIFFERENCE'
+    mod.object = h
+    bpy.context.view_layer.objects.active = ring
+    bpy.ops.object.modifier_apply(modifier="Hole")
+    bpy.data.objects.remove(h, do_unlink=True)
+    ring.data.materials.append(mat_brass_insert)
 
 # ---------------------------------------------------------
 # Enclosure Specs (in mm)
@@ -98,7 +143,7 @@ inner_w = outer_w - 2 * wall_t
 inner_h = outer_h - floor_t
 
 # ---------------------------------------------------------
-# 1. Main Enclosure Base Body
+# 1. Modern Sleek Enclosure Base Body
 # ---------------------------------------------------------
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, outer_h / 2.0))
 base_obj = bpy.context.active_object
@@ -107,7 +152,7 @@ base_obj.scale = (outer_l, outer_w, outer_h)
 bpy.ops.object.transform_apply(scale=True)
 base_obj.data.materials.append(mat_enclosure_base)
 
-# Create Inner Cavity Cutter
+# Inner Cavity Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, floor_t + inner_h / 2.0 + 0.1))
 cavity_obj = bpy.context.active_object
 cavity_obj.name = "Inner_Cavity_Cutter"
@@ -124,10 +169,23 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
-# ---------------------------------------------------------
-# 2. Internal Standoffs & Corner Posts
-# ---------------------------------------------------------
-# 4x Enclosure Lid Corner Posts
+# Futuristic Side Ergonomic Accent Ribs / Grooves
+for side_x in [-outer_l / 2.0, outer_l / 2.0]:
+    for k in range(-3, 4):
+        gy = k * 6.5
+        bpy.ops.mesh.primitive_cube_add(size=1.0, location=(side_x, gy, outer_h / 2.0 + 1.5))
+        grip = bpy.context.active_object
+        grip.scale = (1.2, 2.8, outer_h - 7.0)
+        bpy.ops.object.transform_apply(scale=True)
+        
+        mod_g = base_obj.modifiers.new(name="Grip_Subtract", type='BOOLEAN')
+        mod_g.operation = 'DIFFERENCE'
+        mod_g.object = grip
+        bpy.context.view_layer.objects.active = base_obj
+        bpy.ops.object.modifier_apply(modifier="Grip_Subtract")
+        bpy.data.objects.remove(grip, do_unlink=True)
+
+# 4x Bottom Rubber Base Pads
 corner_margin_x = outer_l / 2.0 - 4.5
 corner_margin_y = outer_w / 2.0 - 4.5
 corner_coords = [
@@ -137,6 +195,15 @@ corner_coords = [
     ( corner_margin_x,  corner_margin_y)
 ]
 
+for i, (cx, cy) in enumerate(corner_coords):
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=1.5, location=(cx, cy, -0.75))
+    foot = bpy.context.active_object
+    foot.name = f"Rubber_Foot_{i+1}"
+    foot.data.materials.append(mat_rubber_feet)
+
+# ---------------------------------------------------------
+# 2. Internal Standoffs & Corner Posts
+# ---------------------------------------------------------
 for i, (cx, cy) in enumerate(corner_coords):
     bpy.ops.mesh.primitive_cylinder_add(radius=4.0, depth=inner_h, location=(cx, cy, floor_t + inner_h / 2.0))
     post = bpy.context.active_object
@@ -164,7 +231,7 @@ for i, (cx, cy) in enumerate(corner_coords):
     bpy.ops.object.modifier_apply(modifier=f"Join_Post_{i+1}")
     bpy.data.objects.remove(post, do_unlink=True)
 
-# Function to add standoff posts to base
+# Function to add standoff posts & brass thread inserts to base
 def add_standoff_posts(base_object, coords, prefix, radius=3.0, height=standoff_h, pilot_r=1.4):
     for i, (px, py) in enumerate(coords):
         z_pos = floor_t + height / 2.0
@@ -192,11 +259,11 @@ def add_standoff_posts(base_object, coords, prefix, radius=3.0, height=standoff_
         bpy.context.view_layer.objects.active = base_object
         bpy.ops.object.modifier_apply(modifier=f"Join_{prefix}_{i+1}")
         bpy.data.objects.remove(st_post, do_unlink=True)
+        
+        # Brass insert collar at standoff top surface
+        create_brass_insert(f"Brass_Insert_{prefix}_{i+1}", px, py, floor_t + height)
 
-# ---------------------------------------------------------
-# Non-Overlapping Layout Coordinates for All 3 Modules
-# ---------------------------------------------------------
-# LM2596 Buck Converter (Back Left)
+# Layout Coordinates for All 3 Modules
 lm_cx, lm_cy = -18.0, 18.0
 lm_coords = [
     (lm_cx - 18.0, lm_cy - 10.0),
@@ -204,7 +271,6 @@ lm_coords = [
 ]
 add_standoff_posts(base_obj, lm_coords, "LM2596")
 
-# MAX3232 RS232 Module (Front Left)
 max_cx, max_cy = -20.0, -16.0
 max_coords = [
     (max_cx - 13.5, max_cy - 13.0),
@@ -214,7 +280,6 @@ max_coords = [
 ]
 add_standoff_posts(base_obj, max_coords, "MAX3232")
 
-# ESP32 DevKit V1 Board (Right Side)
 esp_cx, esp_cy = 24.0, 0.0
 esp_coords = [
     (esp_cx - 11.75, esp_cy - 23.25),
@@ -224,12 +289,21 @@ esp_coords = [
 ]
 add_standoff_posts(base_obj, esp_coords, "ESP32")
 
+# Apply Chamfer/Bevel to Base Outer Edges
+mod_b = base_obj.modifiers.new(name="Bevel_Base", type='BEVEL')
+mod_b.width = 2.0
+mod_b.segments = 3
+mod_b.limit_method = 'ANGLE'
+mod_b.angle_limit = math.radians(40)
+bpy.context.view_layer.objects.active = base_obj
+bpy.ops.object.modifier_apply(modifier="Bevel_Base")
+
 # ---------------------------------------------------------
 # 3. Port Cutouts (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall (aligned with MAX3232 DB9 header at Z = 14.5mm)
+# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
 db9_w, db9_h = 31.5, 14.0
-db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 2 + 4 + 2 + 7 = 15.0mm
+db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 15.0mm
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
 db9_cutter = bpy.context.active_object
 db9_cutter.scale = (db9_w, wall_t * 3.0, db9_h)
@@ -262,7 +336,7 @@ bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 4. Ventilated Top Lid & Corner Lid Screws
+# 4. Ultra-Modern Top Lid with Recessed LED Bezel Panel & 3 Status LEDs
 # ---------------------------------------------------------
 lid_h = 2.5
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
@@ -273,6 +347,15 @@ lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
 lid_obj.data.materials.append(mat_enclosure_lid)
+
+# Apply Modern Chamfer Bevel to Top Lid Edges
+mod_lb = lid_obj.modifiers.new(name="Bevel_Lid", type='BEVEL')
+mod_lb.width = 1.6
+mod_lb.segments = 3
+mod_lb.limit_method = 'ANGLE'
+mod_lb.angle_limit = math.radians(40)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="Bevel_Lid")
 
 # 4x Lid Corner Screw Holes & Screws
 for cx, cy in corner_coords:
@@ -291,26 +374,28 @@ for cx, cy in corner_coords:
     # Create 3D Screw for Lid Corner
     create_m3_screw(f"Screw_Lid_Corner_({cx:.0f},{cy:.0f})", cx, cy, lid_z + lid_h/2.0, shaft_len=8.0)
 
-# Linear Thermal Ventilation Slots
-slot_width = 2.0
-slot_length = 24.0
-slot_pitch = 4.5
-
-for k in range(-3, 3):
-    sx = k * slot_pitch
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(sx, 10.0, lid_z))
-    slot = bpy.context.active_object
-    slot.scale = (slot_width, slot_length, lid_h + 2.0)
-    bpy.ops.object.transform_apply(scale=True)
-    
-    mod_slot = lid_obj.modifiers.new(name=f"Vent_Slot_{k}", type='BOOLEAN')
-    mod_slot.operation = 'DIFFERENCE'
-    mod_slot.object = slot
-    bpy.ops.object.select_all(action='DESELECT')
-    lid_obj.select_set(True)
-    bpy.context.view_layer.objects.active = lid_obj
-    bpy.ops.object.modifier_apply(modifier=f"Vent_Slot_{k}")
-    bpy.data.objects.remove(slot, do_unlink=True)
+# Modern Hexagonal Thermal Vent Grid
+hex_r = 2.2
+for row in range(-2, 3):
+    for col in range(-3, 4):
+        hx = col * 5.2 + (2.6 if row % 2 != 0 else 0)
+        hy = row * 4.5 + 8.0
+        
+        # Skip pot hole region & LED panel region
+        if math.hypot(hx - lm_cx, hy - lm_cy) < 5.0 or hy < -14.0:
+            continue
+            
+        bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=hex_r, depth=lid_h + 2.0, location=(hx, hy, lid_z))
+        hex_vent = bpy.context.active_object
+        
+        mod_h = lid_obj.modifiers.new(name="Hex_Vent", type='BOOLEAN')
+        mod_h.operation = 'DIFFERENCE'
+        mod_h.object = hex_vent
+        bpy.ops.object.select_all(action='DESELECT')
+        lid_obj.select_set(True)
+        bpy.context.view_layer.objects.active = lid_obj
+        bpy.ops.object.modifier_apply(modifier="Hex_Vent")
+        bpy.data.objects.remove(hex_vent, do_unlink=True)
 
 # Potentiometer Tuning Hole (5.0mm diameter centered over LM2596)
 bpy.ops.mesh.primitive_cylinder_add(radius=2.5, depth=lid_h + 2.0, location=(lm_cx, lm_cy, lid_z))
@@ -325,11 +410,45 @@ bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
 # ---------------------------------------------------------
-# 5. Color-Coded 3D Component Mockups with Screw Holes & Screws
+# Modern Recessed LED Bezel Panel & 3 Emissive LEDs (Red, Green, Blue)
+# ---------------------------------------------------------
+led_panel_y = -22.0
+led_z_top = lid_z + lid_h / 2.0
+
+# Recessed LED Panel Strip Box
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, led_z_top + 0.3))
+led_panel = bpy.context.active_object
+led_panel.name = "LED_Bezel_Panel_Strip"
+led_panel.scale = (36.0, 9.0, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+led_panel.data.materials.append(mat_led_bezel)
+
+# 3 Status Indicator LEDs (Red = Power, Green = Status/TX, Blue = Link/RX)
+led_specs = [
+    ("LED_Status_Red_Power",   -11.0, mat_led_red),
+    ("LED_Status_Green_TX",      0.0, mat_led_green),
+    ("LED_Status_Blue_RX",     11.0, mat_led_blue)
+]
+
+for led_name, lx, led_mat in led_specs:
+    # Metallic Bezel Mount Ring
+    bpy.ops.mesh.primitive_cylinder_add(radius=2.2, depth=1.6, location=(lx, led_panel_y, led_z_top + 0.8))
+    bz_ring = bpy.context.active_object
+    bz_ring.name = f"{led_name}_Bezel"
+    bz_ring.data.materials.append(mat_led_bezel)
+    
+    # 3mm Emissive LED Lens Dome
+    bpy.ops.mesh.primitive_cylinder_add(radius=1.5, depth=2.4, location=(lx, led_panel_y, led_z_top + 1.2))
+    led_dome = bpy.context.active_object
+    led_dome.name = led_name
+    led_dome.data.materials.append(led_mat)
+
+# ---------------------------------------------------------
+# 5. Component Mockups (LM2596, MAX3232, ESP32)
 # ---------------------------------------------------------
 pcb_thickness = 2.0
-pcb_z_center = floor_t + standoff_h + pcb_thickness / 2.0  # Z = 2 + 4 + 1 = 7.0mm
-pcb_z_top = floor_t + standoff_h + pcb_thickness          # Z = 2 + 4 + 2 = 8.0mm
+pcb_z_center = floor_t + standoff_h + pcb_thickness / 2.0  # Z = 7.0mm
+pcb_z_top = floor_t + standoff_h + pcb_thickness          # Z = 8.0mm
 
 def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_ctr, pcb_thick=2.0, hole_radius=1.5):
     for idx, (hx, hy) in enumerate(hole_coords):
@@ -345,7 +464,7 @@ def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_ctr, pcb_thick=2.0, hole_rad
         bpy.ops.object.modifier_apply(modifier=f"Screw_Hole_{idx+1}")
         bpy.data.objects.remove(cutter, do_unlink=True)
 
-# --- MAX3232 RS232 Module Mockup (Teal PCB) ---
+# --- MAX3232 RS232 Module Mockup ---
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, max_cy, pcb_z_center))
 m_max = bpy.context.active_object
 m_max.name = "Mockup_MAX3232_PCB"
@@ -357,9 +476,8 @@ cut_pcb_screw_holes(m_max, max_coords, pcb_z_center)
 for idx, (mx, my) in enumerate(max_coords):
     create_m3_screw(f"Screw_MAX3232_{idx+1}", mx, my, pcb_z_top, shaft_len=6.0)
 
-# DB9 Connector block mockup (Metallic Silver) sitting directly ON TOP of MAX3232 PCB top surface
 db9_height = 13.0
-db9_z_pos = pcb_z_top + db9_height / 2.0  # Z = 8.0 + 6.5 = 14.5mm
+db9_z_pos = pcb_z_top + db9_height / 2.0
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, db9_z_pos))
 m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
@@ -367,7 +485,14 @@ m_db9.scale = (31.0, 11.0, db9_height)
 bpy.ops.object.transform_apply(scale=True)
 m_db9.data.materials.append(mat_db9_header)
 
-# --- LM2596 Buck Converter Mockup (Royal Blue PCB) ---
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 0.5, db9_z_pos))
+m_db9_face = bpy.context.active_object
+m_db9_face.name = "Mockup_DB9_BlueFace"
+m_db9_face.scale = (20.0, 1.2, 8.5)
+bpy.ops.object.transform_apply(scale=True)
+m_db9_face.data.materials.append(mat_db9_plastic)
+
+# --- LM2596 Buck Converter Mockup ---
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, pcb_z_center))
 m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
@@ -379,7 +504,7 @@ cut_pcb_screw_holes(m_lm, lm_coords, pcb_z_center)
 for idx, (lx, ly) in enumerate(lm_coords):
     create_m3_screw(f"Screw_LM2596_{idx+1}", lx, ly, pcb_z_top, shaft_len=6.0)
 
-# --- ESP32 DevKit V1 Board Mockup (Matte Black PCB) ---
+# --- ESP32 DevKit V1 Board Mockup ---
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(esp_cx, esp_cy, pcb_z_center))
 m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
@@ -395,7 +520,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Enclosure generated with DB9 connector seated cleanly on top of MAX3232 PCB surface.",
+    "message": "Ultra-modern case generated with 3 status LEDs (Red, Green, Blue), rubber feet, smoked acrylic lid, and M3 screws.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

@@ -3,13 +3,14 @@
 # ///
 """
 Custom 3D Printed Desktop Enclosure Generator for Blender (bpy)
-Generates 6 distinct color-coded objects:
-1. Enclosure Base (Dark Charcoal)
-2. Enclosure Top Lid (Slate Grey)
-3. LM2596 Buck Converter PCB (Royal Blue)
-4. MAX3232 RS232 PCB (Teal)
+Generates color-coded objects with non-overlapping module layout, screw mounting holes & 3D M3 screws:
+1. Enclosure Base with internal standoff posts for all modules (Dark Charcoal)
+2. Enclosure Top Lid with ventilation & corner screw holes (Slate Grey)
+3. LM2596 Buck Converter PCB with 2x M3 mounting holes (Royal Blue)
+4. MAX3232 RS232 PCB with 4x M3 mounting holes (Teal)
 5. MAX3232 DB9 Connector Header (Metallic Silver)
-6. ESP32 DevKit V1 PCB (Matte Black)
+6. ESP32 DevKit V1 PCB with 4x M3 mounting holes (Matte Black)
+7. 14x 3D M3 Pan-Head Mounting Screws (Polished Steel)
 """
 
 import socket
@@ -54,6 +55,33 @@ mat_lm2596         = create_color_material("Mat_LM2596_Blue", (0.02, 0.15, 0.70,
 mat_max3232        = create_color_material("Mat_MAX3232_Teal", (0.0, 0.40, 0.48, 1.0), metallic=0.1, roughness=0.20)
 mat_db9_header     = create_color_material("Mat_DB9_SilverMetal", (0.85, 0.85, 0.88, 1.0), metallic=0.9, roughness=0.15)
 mat_esp32          = create_color_material("Mat_ESP32_MatteBlack", (0.015, 0.015, 0.015, 1.0), metallic=0.05, roughness=0.25)
+mat_m3_screw       = create_color_material("Mat_M3_SteelScrew", (0.80, 0.82, 0.85, 1.0), metallic=0.95, roughness=0.10)
+
+# Helper function to create 3D M3 Screw
+def create_m3_screw(name, x, y, head_z, shaft_len=6.0):
+    head_h = 1.8
+    head_r = 2.75
+    shaft_r = 1.4
+    
+    # Screw Head
+    bpy.ops.mesh.primitive_cylinder_add(radius=head_r, depth=head_h, location=(x, y, head_z + head_h/2.0))
+    s_head = bpy.context.active_object
+    
+    # Screw Shaft
+    bpy.ops.mesh.primitive_cylinder_add(radius=shaft_r, depth=shaft_len, location=(x, y, head_z - shaft_len/2.0))
+    s_shaft = bpy.context.active_object
+    
+    # Join Head and Shaft
+    mod = s_head.modifiers.new(name="Join_Shaft", type='BOOLEAN')
+    mod.operation = 'UNION'
+    mod.object = s_shaft
+    bpy.context.view_layer.objects.active = s_head
+    bpy.ops.object.modifier_apply(modifier="Join_Shaft")
+    bpy.data.objects.remove(s_shaft, do_unlink=True)
+    
+    s_head.name = name
+    s_head.data.materials.append(mat_m3_screw)
+    return s_head
 
 # ---------------------------------------------------------
 # Enclosure Specs (in mm)
@@ -63,6 +91,7 @@ outer_w = 70.0   # Y-axis width
 outer_h = 24.0   # Z-axis height
 wall_t = 2.0     # Wall thickness
 floor_t = 2.0    # Floor thickness
+standoff_h = 4.0 # Height of PCB standoffs from floor
 
 inner_l = outer_l - 2 * wall_t
 inner_w = outer_w - 2 * wall_t
@@ -98,6 +127,7 @@ bpy.data.objects.remove(cavity_obj, do_unlink=True)
 # ---------------------------------------------------------
 # 2. Internal Standoffs & Corner Posts
 # ---------------------------------------------------------
+# 4x Enclosure Lid Corner Posts
 corner_margin_x = outer_l / 2.0 - 4.5
 corner_margin_y = outer_w / 2.0 - 4.5
 corner_coords = [
@@ -134,32 +164,72 @@ for i, (cx, cy) in enumerate(corner_coords):
     bpy.ops.object.modifier_apply(modifier=f"Join_Post_{i+1}")
     bpy.data.objects.remove(post, do_unlink=True)
 
-# LM2596 PCB Mounting Standoffs (2x M3 diagonal)
-lm_cx, lm_cy = -20.0, 14.0
-lm_standoff_dx, lm_standoff_dy = 18.0, 10.0
+# Function to add standoff posts to base
+def add_standoff_posts(base_object, coords, prefix, radius=3.0, height=standoff_h, pilot_r=1.4):
+    for i, (px, py) in enumerate(coords):
+        z_pos = floor_t + height / 2.0
+        bpy.ops.mesh.primitive_cylinder_add(radius=radius, depth=height, location=(px, py, z_pos))
+        st_post = bpy.context.active_object
+        st_post.name = f"{prefix}_Standoff_{i+1}"
+        
+        # Inner M3 pilot hole
+        bpy.ops.mesh.primitive_cylinder_add(radius=pilot_r, depth=height + 2.0, location=(px, py, z_pos))
+        st_hole = bpy.context.active_object
+        
+        mod_h = st_post.modifiers.new(name="Pilot_Hole", type='BOOLEAN')
+        mod_h.operation = 'DIFFERENCE'
+        mod_h.object = st_hole
+        bpy.ops.object.select_all(action='DESELECT')
+        st_post.select_set(True)
+        bpy.context.view_layer.objects.active = st_post
+        bpy.ops.object.modifier_apply(modifier="Pilot_Hole")
+        bpy.data.objects.remove(st_hole, do_unlink=True)
+        
+        # Join standoff to Base
+        mod_j = base_object.modifiers.new(name=f"Join_{prefix}_{i+1}", type='BOOLEAN')
+        mod_j.operation = 'UNION'
+        mod_j.object = st_post
+        bpy.context.view_layer.objects.active = base_object
+        bpy.ops.object.modifier_apply(modifier=f"Join_{prefix}_{i+1}")
+        bpy.data.objects.remove(st_post, do_unlink=True)
+
+# ---------------------------------------------------------
+# Non-Overlapping Layout Coordinates for All 3 Modules
+# ---------------------------------------------------------
+# LM2596 Buck Converter (Back Left)
+lm_cx, lm_cy = -18.0, 18.0
 lm_coords = [
-    (lm_cx - lm_standoff_dx, lm_cy - lm_standoff_dy),
-    (lm_cx + lm_standoff_dx, lm_cy + lm_standoff_dy)
+    (lm_cx - 18.0, lm_cy - 10.0),
+    (lm_cx + 18.0, lm_cy + 10.0)
 ]
-for i, (lx, ly) in enumerate(lm_coords):
-    bpy.ops.mesh.primitive_cylinder_add(radius=3.0, depth=4.0, location=(lx, ly, floor_t + 2.0))
-    lm_post = bpy.context.active_object
-    lm_post.name = f"LM2596_Standoff_{i+1}"
-    lm_post.data.materials.append(mat_enclosure_base)
-    
-    mod = base_obj.modifiers.new(name=f"Join_LM_Post_{i+1}", type='BOOLEAN')
-    mod.operation = 'UNION'
-    mod.object = lm_post
-    bpy.context.view_layer.objects.active = base_obj
-    bpy.ops.object.modifier_apply(modifier=f"Join_LM_Post_{i+1}")
-    bpy.data.objects.remove(lm_post, do_unlink=True)
+add_standoff_posts(base_obj, lm_coords, "LM2596")
+
+# MAX3232 RS232 Module (Front Left)
+max_cx, max_cy = -20.0, -16.0
+max_coords = [
+    (max_cx - 13.5, max_cy - 13.0),
+    (max_cx + 13.5, max_cy - 13.0),
+    (max_cx - 13.5, max_cy + 13.0),
+    (max_cx + 13.5, max_cy + 13.0)
+]
+add_standoff_posts(base_obj, max_coords, "MAX3232")
+
+# ESP32 DevKit V1 Board (Right Side)
+esp_cx, esp_cy = 24.0, 0.0
+esp_coords = [
+    (esp_cx - 11.75, esp_cy - 23.25),
+    (esp_cx + 11.75, esp_cy - 23.25),
+    (esp_cx - 11.75, esp_cy + 23.25),
+    (esp_cx + 11.75, esp_cy + 23.25)
+]
+add_standoff_posts(base_obj, esp_coords, "ESP32")
 
 # ---------------------------------------------------------
 # 3. Port Cutouts (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall
+# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
 db9_w, db9_h = 31.5, 15.5
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -outer_w / 2.0, floor_t + 4.0 + db9_h / 2.0))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, floor_t + 4.0 + db9_h / 2.0))
 db9_cutter = bpy.context.active_object
 db9_cutter.scale = (db9_w, wall_t * 3.0, db9_h)
 bpy.ops.object.transform_apply(scale=True)
@@ -173,9 +243,9 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Cutout")
 bpy.data.objects.remove(db9_cutter, do_unlink=True)
 
-# Micro-USB Cutout on Right Side Wall
+# Micro-USB Cutout on Right Side Wall (aligned with ESP32 at Y = 0.0)
 usb_w, usb_h = 10.5, 7.5
-usb_y_pos = 5.0
+usb_y_pos = esp_cy
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, usb_y_pos, floor_t + 4.0 + usb_h / 2.0))
 usb_cutter = bpy.context.active_object
 usb_cutter.scale = (wall_t * 3.0, usb_w, usb_h)
@@ -191,7 +261,7 @@ bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 4. Ventilated Top Lid
+# 4. Ventilated Top Lid & Corner Lid Screws
 # ---------------------------------------------------------
 lid_h = 2.5
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
@@ -203,7 +273,7 @@ lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
 lid_obj.data.materials.append(mat_enclosure_lid)
 
-# 4x Lid Corner Screw Holes
+# 4x Lid Corner Screw Holes & Screws
 for cx, cy in corner_coords:
     bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 1.0, location=(cx, cy, lid_z))
     sc_hole = bpy.context.active_object
@@ -216,6 +286,9 @@ for cx, cy in corner_coords:
     bpy.context.view_layer.objects.active = lid_obj
     bpy.ops.object.modifier_apply(modifier="Screw_Hole")
     bpy.data.objects.remove(sc_hole, do_unlink=True)
+    
+    # Create 3D Screw for Lid Corner
+    create_m3_screw(f"Screw_Lid_Corner_({cx:.0f},{cy:.0f})", cx, cy, lid_z + lid_h/2.0, shaft_len=8.0)
 
 # Linear Thermal Ventilation Slots
 slot_width = 2.0
@@ -238,7 +311,7 @@ for k in range(-3, 3):
     bpy.ops.object.modifier_apply(modifier=f"Vent_Slot_{k}")
     bpy.data.objects.remove(slot, do_unlink=True)
 
-# Potentiometer Tuning Hole (5.0mm diameter)
+# Potentiometer Tuning Hole (5.0mm diameter centered over LM2596)
 bpy.ops.mesh.primitive_cylinder_add(radius=2.5, depth=lid_h + 2.0, location=(lm_cx, lm_cy, lid_z))
 pot_hole = bpy.context.active_object
 mod_pot = lid_obj.modifiers.new(name="Pot_Hole", type='BOOLEAN')
@@ -251,45 +324,76 @@ bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
 # ---------------------------------------------------------
-# 5. Color-Coded 3D Component Mockups
+# 5. Color-Coded 3D Component Mockups with Screw Holes & Screws
 # ---------------------------------------------------------
-# MAX3232 RS232 Module Mockup (Teal PCB)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -outer_w/2.0 + 16.5, floor_t + 4.0 + 1.0))
+pcb_z_top = floor_t + standoff_h + 2.0  # Top surface of PCB (Z = 2 + 4 + 2 = 8.0mm)
+
+def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_center, pcb_thickness=2.0, hole_radius=1.5):
+    for idx, (hx, hy) in enumerate(hole_coords):
+        bpy.ops.mesh.primitive_cylinder_add(radius=hole_radius, depth=pcb_thickness + 1.0, location=(hx, hy, pcb_z_center))
+        cutter = bpy.context.active_object
+        
+        mod = pcb_obj.modifiers.new(name=f"Screw_Hole_{idx+1}", type='BOOLEAN')
+        mod.operation = 'DIFFERENCE'
+        mod.object = cutter
+        bpy.ops.object.select_all(action='DESELECT')
+        pcb_obj.select_set(True)
+        bpy.context.view_layer.objects.active = pcb_obj
+        bpy.ops.object.modifier_apply(modifier=f"Screw_Hole_{idx+1}")
+        bpy.data.objects.remove(cutter, do_unlink=True)
+
+# --- MAX3232 RS232 Module Mockup (Teal PCB) ---
+max_pcb_z = floor_t + standoff_h + 1.0
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, max_cy, max_pcb_z))
 m_max = bpy.context.active_object
 m_max.name = "Mockup_MAX3232_PCB"
 m_max.scale = (32.0, 33.0, 2.0)
 bpy.ops.object.transform_apply(scale=True)
 m_max.data.materials.append(mat_max3232)
 
+cut_pcb_screw_holes(m_max, max_coords, max_pcb_z)
+for idx, (mx, my) in enumerate(max_coords):
+    create_m3_screw(f"Screw_MAX3232_{idx+1}", mx, my, pcb_z_top, shaft_len=6.0)
+
 # DB9 Connector block mockup (Metallic Silver)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -outer_w/2.0 + 5.5, floor_t + 4.0 + 7.5))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, floor_t + 4.0 + 7.5))
 m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
 m_db9.scale = (31.0, 11.0, 15.0)
 bpy.ops.object.transform_apply(scale=True)
 m_db9.data.materials.append(mat_db9_header)
 
-# LM2596 Buck Converter Mockup (Royal Blue PCB)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, floor_t + 4.0 + 1.0))
+# --- LM2596 Buck Converter Mockup (Royal Blue PCB) ---
+lm_pcb_z = floor_t + standoff_h + 1.0
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, lm_pcb_z))
 m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
 m_lm.scale = (43.2, 21.6, 2.0)
 bpy.ops.object.transform_apply(scale=True)
 m_lm.data.materials.append(mat_lm2596)
 
-# ESP32 DevKit V1 Board Mockup (Matte Black PCB)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(18.0, 5.0, floor_t + 4.0 + 1.0))
+cut_pcb_screw_holes(m_lm, lm_coords, lm_pcb_z)
+for idx, (lx, ly) in enumerate(lm_coords):
+    create_m3_screw(f"Screw_LM2596_{idx+1}", lx, ly, pcb_z_top, shaft_len=6.0)
+
+# --- ESP32 DevKit V1 Board Mockup (Matte Black PCB) ---
+esp_pcb_z = floor_t + standoff_h + 1.0
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(esp_cx, esp_cy, esp_pcb_z))
 m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
 m_esp.scale = (28.5, 51.5, 2.0)
 bpy.ops.object.transform_apply(scale=True)
 m_esp.data.materials.append(mat_esp32)
 
+cut_pcb_screw_holes(m_esp, esp_coords, esp_pcb_z)
+for idx, (ex, ey) in enumerate(esp_coords):
+    create_m3_screw(f"Screw_ESP32_{idx+1}", ex, ey, pcb_z_top, shaft_len=6.0)
+
 bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Enclosure generated with 6 distinct color-coded objects.",
+    "message": "Enclosure generated with non-overlapping module layout, 3D PCB screw holes, internal standoffs, and 14x M3 mounting screws.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

@@ -2,11 +2,12 @@
 # dependencies = []
 # ///
 """
-3D Printable Desktop Enclosure Generator for Blender (bpy)
-Optimized 3D-printable geometry with port-aware side wall styling and precise LED cutouts:
-1. Enclosure Base with 2.5mm corner chamfers, port-aware side accent grooves (no port collisions), DB9 & Micro-USB port cutouts, internal standoff posts
-2. Enclosure Top Lid with 4x M3 screw holes, 3x physical 3.2mm LED through-hole cutouts (with 0.5mm chamfered countersinks), potentiometer hole & vent grid
+Ultra-Modern & Futuristic 3D-Printable Enclosure Generator for Blender (bpy)
+Features advanced 3D-printable industrial design geometry:
+1. Enclosure Base with 2.5mm double-chamfered fillets, port-aware side grooves, chamfered port bezels (DB9 & Micro-USB), rear aero-vents & flush rubber feet sockets
+2. Ultra-Stylish Top Lid with dual-plane recessed border, debossed sci-fi accent lines, counter-bored M3 screw sockets, chamfered status badge channel, 3x 3.2mm LED cutouts with countersinks, and honeycomb vent grid
 3. Clearance Reference PCB Mockups (LM2596, MAX3232, ESP32)
+4. Single uniform 3D-printable filament material (Mat_3D_Print_Filament)
 """
 
 import socket
@@ -40,9 +41,9 @@ def get_3d_print_material():
         mat.use_nodes = True
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
-            bsdf.inputs['Base Color'].default_value = (0.20, 0.22, 0.25, 1.0)
+            bsdf.inputs['Base Color'].default_value = (0.18, 0.20, 0.24, 1.0)
             if 'Roughness' in bsdf.inputs:
-                bsdf.inputs['Roughness'].default_value = 0.40
+                bsdf.inputs['Roughness'].default_value = 0.35
     return mat
 
 mat_filament = get_3d_print_material()
@@ -62,7 +63,7 @@ inner_w = outer_w - 2 * wall_t
 inner_h = outer_h - floor_t
 
 # ---------------------------------------------------------
-# 1. 3D Printable Enclosure Base Body
+# 1. Futuristic 3D Printable Enclosure Base Body
 # ---------------------------------------------------------
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, outer_h / 2.0))
 base_obj = bpy.context.active_object
@@ -88,8 +89,7 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
-# Port-Aware Side Accent Grooves (Skipping USB Port Region on Right Wall)
-# Left Wall (X = -45mm): 5 symmetric grooves
+# Port-Aware Side Accent Grooves (Left Wall & Right Wall Ends Only)
 for k in [-2, -1, 0, 1, 2]:
     gy = k * 7.5
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-outer_l / 2.0, gy, outer_h / 2.0 + 1.0))
@@ -104,7 +104,6 @@ for k in [-2, -1, 0, 1, 2]:
     bpy.ops.object.modifier_apply(modifier="Grip_Subtract_L")
     bpy.data.objects.remove(grip, do_unlink=True)
 
-# Right Wall (X = +45mm): Grooves placed ONLY on ends (Y = ±18mm, ±12mm), skipping USB port (Y = -5.25 to +5.25mm)
 for gy in [-20.0, -14.0, 14.0, 20.0]:
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, gy, outer_h / 2.0 + 1.0))
     grip = bpy.context.active_object
@@ -117,6 +116,21 @@ for gy in [-20.0, -14.0, 14.0, 20.0]:
     bpy.context.view_layer.objects.active = base_obj
     bpy.ops.object.modifier_apply(modifier="Grip_Subtract_R")
     bpy.data.objects.remove(grip, do_unlink=True)
+
+# Rear Aero-Vent Slits on Back Wall (Y = +35mm)
+for k in [-1, 0, 1]:
+    rx = k * 14.0
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(rx, outer_w / 2.0, outer_h / 2.0 + 2.0))
+    r_vent = bpy.context.active_object
+    r_vent.scale = (8.0, wall_t * 3.0, 3.5)
+    bpy.ops.object.transform_apply(scale=True)
+    
+    mod_rv = base_obj.modifiers.new(name="Rear_Vent", type='BOOLEAN')
+    mod_rv.operation = 'DIFFERENCE'
+    mod_rv.object = r_vent
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier="Rear_Vent")
+    bpy.data.objects.remove(r_vent, do_unlink=True)
 
 # 4x Bottom Rubber Base Pad Recessed Sockets
 corner_margin_x = outer_l / 2.0 - 4.5
@@ -232,9 +246,9 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Bevel_Base")
 
 # ---------------------------------------------------------
-# 3. Port Cutouts (DB9 Front & Micro-USB Side)
+# 3. Port Cutouts with Chamfered Port Bezels (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
+# DB9 Cutout on Front Wall with 45-degree Chamfer Bezel
 db9_w, db9_h = 31.5, 14.0
 db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 15.0mm
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
@@ -251,7 +265,22 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Cutout")
 bpy.data.objects.remove(db9_cutter, do_unlink=True)
 
-# Micro-USB Cutout on Right Side Wall (aligned with ESP32 at Y = 0.0)
+# Outer DB9 Chamfer Bezel Cutter
+bpy.ops.mesh.primitive_cone_add(radius1=18.0, radius2=16.0, depth=1.2, location=(max_cx, -outer_w / 2.0 - 0.2, db9_z_center), rotation=(math.radians(90), 0, 0))
+db9_bez = bpy.context.active_object
+db9_bez.scale = (1.0, 1.0, 0.8)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_db9_b = base_obj.modifiers.new(name="DB9_Bezel_Cut", type='BOOLEAN')
+mod_db9_b.operation = 'DIFFERENCE'
+mod_db9_b.object = db9_bez
+bpy.ops.object.select_all(action='DESELECT')
+base_obj.select_set(True)
+bpy.context.view_layer.objects.active = base_obj
+bpy.ops.object.modifier_apply(modifier="DB9_Bezel_Cut")
+bpy.data.objects.remove(db9_bez, do_unlink=True)
+
+# Micro-USB Cutout on Right Side Wall with Chamfer Bezel
 usb_w, usb_h = 10.5, 7.5
 usb_y_pos = esp_cy
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, usb_y_pos, floor_t + 4.0 + usb_h / 2.0))
@@ -268,8 +297,23 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
+# Outer Micro-USB Chamfer Bezel Cutter
+bpy.ops.mesh.primitive_cone_add(radius1=6.5, radius2=5.0, depth=1.0, location=(outer_l / 2.0 + 0.2, usb_y_pos, floor_t + 4.0 + usb_h / 2.0), rotation=(0, math.radians(90), 0))
+usb_bez = bpy.context.active_object
+usb_bez.scale = (1.0, 0.8, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_usb_b = base_obj.modifiers.new(name="USB_Bezel_Cut", type='BOOLEAN')
+mod_usb_b.operation = 'DIFFERENCE'
+mod_usb_b.object = usb_bez
+bpy.ops.object.select_all(action='DESELECT')
+base_obj.select_set(True)
+bpy.context.view_layer.objects.active = base_obj
+bpy.ops.object.modifier_apply(modifier="USB_Bezel_Cut")
+bpy.data.objects.remove(usb_bez, do_unlink=True)
+
 # ---------------------------------------------------------
-# 4. Ultra-Stylish Top Lid with Dual-Plane Recessed Border & Sockets
+# 4. Ultra-Stylish Top Lid with Sci-Fi Debossed Accents & Sockets
 # ---------------------------------------------------------
 lid_h = 2.8
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
@@ -296,6 +340,22 @@ lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Top_Border_Recess")
 bpy.data.objects.remove(top_recess, do_unlink=True)
+
+# Debossed Geometric Sci-Fi Accent Lines
+for line_y in [-18.0, 18.0]:
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, line_y, lid_z_top - 0.2))
+    line_cut = bpy.context.active_object
+    line_cut.scale = (outer_l - 12.0, 0.8, 0.6)
+    bpy.ops.object.transform_apply(scale=True)
+    
+    mod_lc = lid_obj.modifiers.new(name="Debossed_Line", type='BOOLEAN')
+    mod_lc.operation = 'DIFFERENCE'
+    mod_lc.object = line_cut
+    bpy.ops.object.select_all(action='DESELECT')
+    lid_obj.select_set(True)
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier="Debossed_Line")
+    bpy.data.objects.remove(line_cut, do_unlink=True)
 
 # Apply Double-Stepped Bevel to Top Lid Edges
 mod_lb = lid_obj.modifiers.new(name="Bevel_Lid", type='BEVEL')
@@ -415,7 +475,7 @@ for idx, lx in enumerate(led_hole_xs):
     bpy.ops.object.modifier_apply(modifier=f"LED_Cutout_Hole_{idx+1}")
     bpy.data.objects.remove(led_cutter, do_unlink=True)
     
-    # Chamfered funnel countersink at top of LED hole (for smooth insertion of 3mm LED dome)
+    # Chamfered funnel countersink at top of LED hole
     bpy.ops.mesh.primitive_cone_add(radius1=2.2, radius2=1.6, depth=0.8, location=(lx, led_panel_y, lid_z_top - 0.4))
     led_cs = bpy.context.active_object
     mod_lcs = lid_obj.modifiers.new(name=f"LED_CS_{idx+1}", type='BOOLEAN')
@@ -487,7 +547,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Enclosure updated with port-aware side wall grooves and chamfered 3.2mm LED cutout holes.",
+    "message": "Futuristic enclosure geometry generated with chamfered DB9 & Micro-USB port bezels, rear aero-vents, sci-fi debossed lid accents, counter-bored M3 screw sockets, and chamfered 3.2mm LED cutouts.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

@@ -3,9 +3,9 @@
 # ///
 """
 3D Printable Desktop Enclosure Generator for Blender (bpy)
-Clean single-material geometry optimized for 3D printing (FDM/SLA):
-1. Enclosure Base with 2.2mm corner fillets, side cooling ribs, DB9 & Micro-USB port cutouts, internal standoff posts
-2. Enclosure Top Lid with 4x M3 screw holes, 3x physical 3.2mm LED through-hole cutouts, potentiometer hole & vent grid
+Optimized 3D-printable geometry with port-aware side wall styling and precise LED cutouts:
+1. Enclosure Base with 2.5mm corner chamfers, port-aware side accent grooves (no port collisions), DB9 & Micro-USB port cutouts, internal standoff posts
+2. Enclosure Top Lid with 4x M3 screw holes, 3x physical 3.2mm LED through-hole cutouts (with 0.5mm chamfered countersinks), potentiometer hole & vent grid
 3. Clearance Reference PCB Mockups (LM2596, MAX3232, ESP32)
 """
 
@@ -30,7 +30,7 @@ for collection in [bpy.data.meshes, bpy.data.materials]:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Single Uniform 3D Printing Material
+# Single Uniform 3D Printing Filament Material
 # ---------------------------------------------------------
 def get_3d_print_material():
     mat_name = "Mat_3D_Print_Filament"
@@ -40,7 +40,7 @@ def get_3d_print_material():
         mat.use_nodes = True
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
-            bsdf.inputs['Base Color'].default_value = (0.2, 0.22, 0.25, 1.0)
+            bsdf.inputs['Base Color'].default_value = (0.20, 0.22, 0.25, 1.0)
             if 'Roughness' in bsdf.inputs:
                 bsdf.inputs['Roughness'].default_value = 0.40
     return mat
@@ -88,23 +88,37 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
-# Side Cooling Accent Ribs (7 Slits per side wall)
-for side_x in [-outer_l / 2.0, outer_l / 2.0]:
-    for k in range(-3, 4):
-        gy = k * 6.5
-        bpy.ops.mesh.primitive_cube_add(size=1.0, location=(side_x, gy, outer_h / 2.0 + 1.5))
-        grip = bpy.context.active_object
-        grip.scale = (1.4, 2.6, outer_h - 7.0)
-        bpy.ops.object.transform_apply(scale=True)
-        
-        mod_g = base_obj.modifiers.new(name="Grip_Subtract", type='BOOLEAN')
-        mod_g.operation = 'DIFFERENCE'
-        mod_g.object = grip
-        bpy.context.view_layer.objects.active = base_obj
-        bpy.ops.object.modifier_apply(modifier="Grip_Subtract")
-        bpy.data.objects.remove(grip, do_unlink=True)
+# Port-Aware Side Accent Grooves (Skipping USB Port Region on Right Wall)
+# Left Wall (X = -45mm): 5 symmetric grooves
+for k in [-2, -1, 0, 1, 2]:
+    gy = k * 7.5
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(-outer_l / 2.0, gy, outer_h / 2.0 + 1.0))
+    grip = bpy.context.active_object
+    grip.scale = (1.4, 2.8, outer_h - 8.0)
+    bpy.ops.object.transform_apply(scale=True)
+    
+    mod_g = base_obj.modifiers.new(name="Grip_Subtract_L", type='BOOLEAN')
+    mod_g.operation = 'DIFFERENCE'
+    mod_g.object = grip
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier="Grip_Subtract_L")
+    bpy.data.objects.remove(grip, do_unlink=True)
 
-# 4x Bottom Rubber Base Pad Recesses
+# Right Wall (X = +45mm): Grooves placed ONLY on ends (Y = ±18mm, ±12mm), skipping USB port (Y = -5.25 to +5.25mm)
+for gy in [-20.0, -14.0, 14.0, 20.0]:
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, gy, outer_h / 2.0 + 1.0))
+    grip = bpy.context.active_object
+    grip.scale = (1.4, 2.8, outer_h - 8.0)
+    bpy.ops.object.transform_apply(scale=True)
+    
+    mod_g = base_obj.modifiers.new(name="Grip_Subtract_R", type='BOOLEAN')
+    mod_g.operation = 'DIFFERENCE'
+    mod_g.object = grip
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier="Grip_Subtract_R")
+    bpy.data.objects.remove(grip, do_unlink=True)
+
+# 4x Bottom Rubber Base Pad Recessed Sockets
 corner_margin_x = outer_l / 2.0 - 4.5
 corner_margin_y = outer_w / 2.0 - 4.5
 corner_coords = [
@@ -208,10 +222,10 @@ esp_coords = [
 ]
 add_standoff_posts(base_obj, esp_coords, "ESP32")
 
-# Apply Chamfer/Bevel to Base Outer Edges
+# Apply Smooth 2.5mm Chamfer/Bevel to Base Outer Edges
 mod_b = base_obj.modifiers.new(name="Bevel_Base", type='BEVEL')
-mod_b.width = 2.2
-mod_b.segments = 3
+mod_b.width = 2.5
+mod_b.segments = 4
 mod_b.limit_method = 'ANGLE'
 mod_b.angle_limit = math.radians(40)
 bpy.context.view_layer.objects.active = base_obj
@@ -220,7 +234,7 @@ bpy.ops.object.modifier_apply(modifier="Bevel_Base")
 # ---------------------------------------------------------
 # 3. Port Cutouts (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall
+# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
 db9_w, db9_h = 31.5, 14.0
 db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 15.0mm
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
@@ -237,7 +251,7 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Cutout")
 bpy.data.objects.remove(db9_cutter, do_unlink=True)
 
-# Micro-USB Cutout on Right Side Wall
+# Micro-USB Cutout on Right Side Wall (aligned with ESP32 at Y = 0.0)
 usb_w, usb_h = 10.5, 7.5
 usb_y_pos = esp_cy
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, usb_y_pos, floor_t + 4.0 + usb_h / 2.0))
@@ -255,9 +269,9 @@ bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 4. 3D Printable Top Lid with 3x Physical 3.2mm LED Cutout Holes
+# 4. Ultra-Stylish Top Lid with Dual-Plane Recessed Border & Sockets
 # ---------------------------------------------------------
-lid_h = 2.5
+lid_h = 2.8
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
 lid_z_top = lid_z + lid_h / 2.0
 
@@ -268,17 +282,33 @@ lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
 lid_obj.data.materials.append(mat_filament)
 
-# Apply Chamfer Bevel to Top Lid Edges
+# Dual-Plane Recessed Center Border
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))
+top_recess = bpy.context.active_object
+top_recess.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_tr = lid_obj.modifiers.new(name="Top_Border_Recess", type='BOOLEAN')
+mod_tr.operation = 'DIFFERENCE'
+mod_tr.object = top_recess
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="Top_Border_Recess")
+bpy.data.objects.remove(top_recess, do_unlink=True)
+
+# Apply Double-Stepped Bevel to Top Lid Edges
 mod_lb = lid_obj.modifiers.new(name="Bevel_Lid", type='BEVEL')
-mod_lb.width = 1.6
-mod_lb.segments = 3
+mod_lb.width = 1.8
+mod_lb.segments = 4
 mod_lb.limit_method = 'ANGLE'
 mod_lb.angle_limit = math.radians(40)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Bevel_Lid")
 
-# 4x Lid Corner Screw Holes
+# 4x Lid Corner Screw Holes with Flush Counter-Bore Sockets
 for cx, cy in corner_coords:
+    # Through-hole
     bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 1.0, location=(cx, cy, lid_z))
     sc_hole = bpy.context.active_object
     
@@ -290,8 +320,20 @@ for cx, cy in corner_coords:
     bpy.context.view_layer.objects.active = lid_obj
     bpy.ops.object.modifier_apply(modifier="Screw_Hole")
     bpy.data.objects.remove(sc_hole, do_unlink=True)
+    
+    # Counter-bore chamfer socket for flush M3 head
+    bpy.ops.mesh.primitive_cylinder_add(radius=3.0, depth=1.2, location=(cx, cy, lid_z_top - 0.6))
+    cb_socket = bpy.context.active_object
+    mod_cb = lid_obj.modifiers.new(name="CB_Socket", type='BOOLEAN')
+    mod_cb.operation = 'DIFFERENCE'
+    mod_cb.object = cb_socket
+    bpy.ops.object.select_all(action='DESELECT')
+    lid_obj.select_set(True)
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier="CB_Socket")
+    bpy.data.objects.remove(cb_socket, do_unlink=True)
 
-# Modern Hexagonal Thermal Vent Grid
+# Hexagonal Thermal Vent Grid Array
 hex_r = 2.2
 for row in range(-2, 3):
     for col in range(-3, 4):
@@ -314,7 +356,7 @@ for row in range(-2, 3):
         bpy.ops.object.modifier_apply(modifier="Hex_Vent")
         bpy.data.objects.remove(hex_vent, do_unlink=True)
 
-# Potentiometer Tuning Hole (5.0mm diameter centered over LM2596)
+# Potentiometer Tuning Access Port with Chamfered Funnel Bezel
 bpy.ops.mesh.primitive_cylinder_add(radius=2.5, depth=lid_h + 2.0, location=(lm_cx, lm_cy, lid_z))
 pot_hole = bpy.context.active_object
 mod_pot = lid_obj.modifiers.new(name="Pot_Hole", type='BOOLEAN')
@@ -326,14 +368,25 @@ bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
+bpy.ops.mesh.primitive_cone_add(radius1=4.0, radius2=2.5, depth=1.0, location=(lm_cx, lm_cy, lid_z_top - 0.5))
+pot_funnel = bpy.context.active_object
+mod_fn = lid_obj.modifiers.new(name="Pot_Funnel", type='BOOLEAN')
+mod_fn.operation = 'DIFFERENCE'
+mod_fn.object = pot_funnel
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="Pot_Funnel")
+bpy.data.objects.remove(pot_funnel, do_unlink=True)
+
 # ---------------------------------------------------------
-# 3x PHYSICAL LED THROUGH-HOLE CUTOUTS (3.2mm Diameter) IN TOP LID
+# Recessed Status Badge Channel & 3x Physical 3.2mm LED Cutout Holes with 0.5mm Chamfered Countersinks
 # ---------------------------------------------------------
 led_panel_y = -22.0
 led_hole_xs = [-11.0, 0.0, 11.0]
 
-# Recessed LED Status Panel Channel Subtracted from Top Lid Surface
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, lid_z_top - 0.3))
+# Recessed LED Status Badge Channel
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, lid_z_top - 0.4))
 inlay_cutter = bpy.context.active_object
 inlay_cutter.scale = (36.0, 9.0, 1.2)
 bpy.ops.object.transform_apply(scale=True)
@@ -347,8 +400,9 @@ bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
 bpy.data.objects.remove(inlay_cutter, do_unlink=True)
 
-# 3x Physical 3.2mm LED Cutout Holes
+# 3x Physical 3.2mm LED Through-Hole Cutouts (Radius 1.6mm = 3.2mm Diameter) + 0.5mm Chamfer Countersinks
 for idx, lx in enumerate(led_hole_xs):
+    # Through-hole (3.2mm diameter)
     bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 3.0, location=(lx, led_panel_y, lid_z))
     led_cutter = bpy.context.active_object
     
@@ -360,13 +414,24 @@ for idx, lx in enumerate(led_hole_xs):
     bpy.context.view_layer.objects.active = lid_obj
     bpy.ops.object.modifier_apply(modifier=f"LED_Cutout_Hole_{idx+1}")
     bpy.data.objects.remove(led_cutter, do_unlink=True)
+    
+    # Chamfered funnel countersink at top of LED hole (for smooth insertion of 3mm LED dome)
+    bpy.ops.mesh.primitive_cone_add(radius1=2.2, radius2=1.6, depth=0.8, location=(lx, led_panel_y, lid_z_top - 0.4))
+    led_cs = bpy.context.active_object
+    mod_lcs = lid_obj.modifiers.new(name=f"LED_CS_{idx+1}", type='BOOLEAN')
+    mod_lcs.operation = 'DIFFERENCE'
+    mod_lcs.object = led_cs
+    bpy.ops.object.select_all(action='DESELECT')
+    lid_obj.select_set(True)
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier=f"LED_CS_{idx+1}")
+    bpy.data.objects.remove(led_cs, do_unlink=True)
 
 # ---------------------------------------------------------
 # 5. Clearance Reference PCB Mockups
 # ---------------------------------------------------------
 pcb_thickness = 2.0
 pcb_z_center = floor_t + standoff_h + pcb_thickness / 2.0  # Z = 7.0mm
-pcb_z_top = floor_t + standoff_h + pcb_thickness          # Z = 8.0mm
 
 def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_ctr, pcb_thick=2.0, hole_radius=1.5):
     for idx, (hx, hy) in enumerate(hole_coords):
@@ -392,7 +457,7 @@ m_max.data.materials.append(mat_filament)
 cut_pcb_screw_holes(m_max, max_coords, pcb_z_center)
 
 db9_height = 13.0
-db9_z_pos = pcb_z_top + db9_height / 2.0
+db9_z_pos = floor_t + standoff_h + pcb_thickness + db9_height / 2.0
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, db9_z_pos))
 m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
@@ -422,7 +487,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Clean 3D-printable enclosure geometry generated with single uniform filament material. All multi-color materials removed.",
+    "message": "Enclosure updated with port-aware side wall grooves and chamfered 3.2mm LED cutout holes.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

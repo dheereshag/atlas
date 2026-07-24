@@ -3,11 +3,13 @@
 # ///
 """
 Custom 3D Printed Desktop Enclosure Generator for Blender (bpy)
-Generates an enclosure base, ventilated lid, mounting standoffs, port cutouts,
-and 3D visual component mockups for:
-1. LM2596 DC-DC Buck Converter
-2. MAX3232 RS232 Module
-3. ESP32 DevKit V1 Board
+Generates 6 distinct color-coded objects:
+1. Enclosure Base (Dark Charcoal)
+2. Enclosure Top Lid (Slate Grey)
+3. LM2596 Buck Converter PCB (Royal Blue)
+4. MAX3232 RS232 PCB (Teal)
+5. MAX3232 DB9 Connector Header (Metallic Silver)
+6. ESP32 DevKit V1 PCB (Matte Black)
 """
 
 import socket
@@ -30,9 +32,9 @@ for collection in [bpy.data.meshes, bpy.data.materials]:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Materials Setup
+# Distinct Color Materials
 # ---------------------------------------------------------
-def get_or_create_material(name, color, roughness=0.4):
+def create_color_material(name, color, metallic=0.0, roughness=0.3):
     mat = bpy.data.materials.get(name)
     if not mat:
         mat = bpy.data.materials.new(name=name)
@@ -40,14 +42,18 @@ def get_or_create_material(name, color, roughness=0.4):
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
             bsdf.inputs['Base Color'].default_value = color
-            bsdf.inputs['Roughness'].default_value = roughness
+            if 'Metallic' in bsdf.inputs:
+                bsdf.inputs['Metallic'].default_value = metallic
+            if 'Roughness' in bsdf.inputs:
+                bsdf.inputs['Roughness'].default_value = roughness
     return mat
 
-mat_enclosure = get_or_create_material("Enclosure_ABS", (0.12, 0.14, 0.18, 1.0), 0.3)
-mat_lid = get_or_create_material("Enclosure_Lid", (0.18, 0.20, 0.25, 1.0), 0.3)
-mat_pcb_blue = get_or_create_material("PCB_Blue", (0.05, 0.25, 0.70, 1.0), 0.2)
-mat_pcb_black = get_or_create_material("PCB_Black", (0.02, 0.02, 0.02, 1.0), 0.2)
-mat_metal = get_or_create_material("Metal_DB9", (0.7, 0.7, 0.75, 1.0), 0.1)
+mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.08, 0.09, 0.12, 1.0), metallic=0.0, roughness=0.35)
+mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.18, 0.22, 0.28, 1.0), metallic=0.0, roughness=0.30)
+mat_lm2596         = create_color_material("Mat_LM2596_Blue", (0.02, 0.15, 0.70, 1.0), metallic=0.1, roughness=0.20)
+mat_max3232        = create_color_material("Mat_MAX3232_Teal", (0.0, 0.40, 0.48, 1.0), metallic=0.1, roughness=0.20)
+mat_db9_header     = create_color_material("Mat_DB9_SilverMetal", (0.85, 0.85, 0.88, 1.0), metallic=0.9, roughness=0.15)
+mat_esp32          = create_color_material("Mat_ESP32_MatteBlack", (0.015, 0.015, 0.015, 1.0), metallic=0.05, roughness=0.25)
 
 # ---------------------------------------------------------
 # Enclosure Specs (in mm)
@@ -70,7 +76,7 @@ base_obj = bpy.context.active_object
 base_obj.name = "Enclosure_Base"
 base_obj.scale = (outer_l, outer_w, outer_h)
 bpy.ops.object.transform_apply(scale=True)
-base_obj.data.materials.append(mat_enclosure)
+base_obj.data.materials.append(mat_enclosure_base)
 
 # Create Inner Cavity Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, floor_t + inner_h / 2.0 + 0.1))
@@ -87,7 +93,6 @@ bpy.ops.object.select_all(action='DESELECT')
 base_obj.select_set(True)
 bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
-
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
 # ---------------------------------------------------------
@@ -106,7 +111,7 @@ for i, (cx, cy) in enumerate(corner_coords):
     bpy.ops.mesh.primitive_cylinder_add(radius=4.0, depth=inner_h, location=(cx, cy, floor_t + inner_h / 2.0))
     post = bpy.context.active_object
     post.name = f"Corner_Post_{i+1}"
-    post.data.materials.append(mat_enclosure)
+    post.data.materials.append(mat_enclosure_base)
     
     # M3 Hole
     bpy.ops.mesh.primitive_cylinder_add(radius=1.4, depth=inner_h + 1.0, location=(cx, cy, floor_t + inner_h / 2.0))
@@ -140,7 +145,7 @@ for i, (lx, ly) in enumerate(lm_coords):
     bpy.ops.mesh.primitive_cylinder_add(radius=3.0, depth=4.0, location=(lx, ly, floor_t + 2.0))
     lm_post = bpy.context.active_object
     lm_post.name = f"LM2596_Standoff_{i+1}"
-    lm_post.data.materials.append(mat_enclosure)
+    lm_post.data.materials.append(mat_enclosure_base)
     
     mod = base_obj.modifiers.new(name=f"Join_LM_Post_{i+1}", type='BOOLEAN')
     mod.operation = 'UNION'
@@ -196,7 +201,7 @@ lid_obj = bpy.context.active_object
 lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
-lid_obj.data.materials.append(mat_lid)
+lid_obj.data.materials.append(mat_enclosure_lid)
 
 # 4x Lid Corner Screw Holes
 for cx, cy in corner_coords:
@@ -246,45 +251,45 @@ bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
 # ---------------------------------------------------------
-# 5. 3D Component Mockups
+# 5. Color-Coded 3D Component Mockups
 # ---------------------------------------------------------
-# MAX3232 RS232 Module Mockup
+# MAX3232 RS232 Module Mockup (Teal PCB)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -outer_w/2.0 + 16.5, floor_t + 4.0 + 1.0))
 m_max = bpy.context.active_object
 m_max.name = "Mockup_MAX3232_PCB"
 m_max.scale = (32.0, 33.0, 2.0)
 bpy.ops.object.transform_apply(scale=True)
-m_max.data.materials.append(mat_pcb_blue)
+m_max.data.materials.append(mat_max3232)
 
-# DB9 Connector block mockup
+# DB9 Connector block mockup (Metallic Silver)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, -outer_w/2.0 + 5.5, floor_t + 4.0 + 7.5))
 m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
 m_db9.scale = (31.0, 11.0, 15.0)
 bpy.ops.object.transform_apply(scale=True)
-m_db9.data.materials.append(mat_metal)
+m_db9.data.materials.append(mat_db9_header)
 
-# LM2596 Buck Converter Mockup
+# LM2596 Buck Converter Mockup (Royal Blue PCB)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, floor_t + 4.0 + 1.0))
 m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
 m_lm.scale = (43.2, 21.6, 2.0)
 bpy.ops.object.transform_apply(scale=True)
-m_lm.data.materials.append(mat_pcb_blue)
+m_lm.data.materials.append(mat_lm2596)
 
-# ESP32 DevKit V1 Board Mockup
+# ESP32 DevKit V1 Board Mockup (Matte Black PCB)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(18.0, 5.0, floor_t + 4.0 + 1.0))
 m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
 m_esp.scale = (28.5, 51.5, 2.0)
 bpy.ops.object.transform_apply(scale=True)
-m_esp.data.materials.append(mat_pcb_black)
+m_esp.data.materials.append(mat_esp32)
 
 bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Reverted back to clean 6-object enclosure setup.",
+    "message": "Enclosure generated with 6 distinct color-coded objects.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

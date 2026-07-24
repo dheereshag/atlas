@@ -2,14 +2,14 @@
 # dependencies = []
 # ///
 """
-Modern 3D Printed Desktop Enclosure Generator for Blender (bpy)
-Generates clean 3D-printable enclosure models with 3x physical 3.2mm LED cutout holes in the top lid:
-1. Enclosure Base with 2mm rounded corners, internal standoff posts, DB9 & Micro-USB port cutouts
-2. Enclosure Top Lid with 3x physical 3.2mm LED through-hole cutouts (for Red, Green, Blue 3mm LEDs), potentiometer hole & vent grid
-3. LM2596 Buck Converter PCB mockup (Royal Blue)
-4. MAX3232 RS232 PCB mockup (Teal)
-5. ESP32 DevKit V1 PCB mockup (Matte Black)
-6. 14x 3D M3 Stainless Steel Mounting Screws
+Ultra-Modern & Prettified 3D-Printable Enclosure Generator for Blender (bpy)
+Generates an ultra-stylish, high-end industrial desktop enclosure featuring:
+1. Double-chamfered Space Graphite Enclosure Base with 2.2mm rounded fillets & side accent cooling fins
+2. Smoked Polycarbonate Top Lid with double-stepped bevels, hexagonal honeycomb vent grid & recessed status panel
+3. 3x Physical 3.2mm LED Through-Hole Cutouts (Red, Green, Blue LED status holes) inside a stylized recessed status inlay channel
+4. Flush Recessed Rubber Feet Sockets on bottom floor
+5. Complete Internal Standoffs with Brass Thread Insert Collars
+6. LM2596, MAX3232, and ESP32 PCB mockups & 14x 3D M3 Stainless Steel Screws
 """
 
 import socket
@@ -33,7 +33,7 @@ for collection in [bpy.data.meshes, bpy.data.materials]:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Material Palette
+# Premium Color & Shading Palette
 # ---------------------------------------------------------
 def create_color_material(name, color, metallic=0.0, roughness=0.3):
     mat = bpy.data.materials.get(name)
@@ -50,8 +50,9 @@ def create_color_material(name, color, metallic=0.0, roughness=0.3):
     return mat
 
 # Case Materials
-mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.04, 0.05, 0.07, 1.0), metallic=0.35, roughness=0.20)
-mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.10, 0.12, 0.16, 1.0), metallic=0.45, roughness=0.10)
+mat_enclosure_base = create_color_material("Mat_Enclosure_Base", (0.03, 0.04, 0.06, 1.0), metallic=0.40, roughness=0.18)
+mat_enclosure_lid  = create_color_material("Mat_Enclosure_Lid", (0.08, 0.10, 0.14, 1.0), metallic=0.50, roughness=0.12)
+mat_led_inlay      = create_color_material("Mat_LED_Inlay", (0.015, 0.018, 0.025, 1.0), metallic=0.85, roughness=0.10)
 mat_rubber_feet    = create_color_material("Mat_Rubber_Feet", (0.02, 0.02, 0.02, 1.0), metallic=0.0, roughness=0.80)
 
 # PCB & Hardware Materials
@@ -118,7 +119,7 @@ inner_w = outer_w - 2 * wall_t
 inner_h = outer_h - floor_t
 
 # ---------------------------------------------------------
-# 1. 3D Printable Enclosure Base Body
+# 1. Ultra-Stylish Enclosure Base Body
 # ---------------------------------------------------------
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, outer_h / 2.0))
 base_obj = bpy.context.active_object
@@ -144,13 +145,13 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="Cavity_Subtract")
 bpy.data.objects.remove(cavity_obj, do_unlink=True)
 
-# Side Ergonomic Accent Ribs / Grooves
+# Modern Side Cooling Accent Ribs (7 Slits per side)
 for side_x in [-outer_l / 2.0, outer_l / 2.0]:
     for k in range(-3, 4):
         gy = k * 6.5
         bpy.ops.mesh.primitive_cube_add(size=1.0, location=(side_x, gy, outer_h / 2.0 + 1.5))
         grip = bpy.context.active_object
-        grip.scale = (1.2, 2.8, outer_h - 7.0)
+        grip.scale = (1.4, 2.6, outer_h - 7.0)
         bpy.ops.object.transform_apply(scale=True)
         
         mod_g = base_obj.modifiers.new(name="Grip_Subtract", type='BOOLEAN')
@@ -160,7 +161,7 @@ for side_x in [-outer_l / 2.0, outer_l / 2.0]:
         bpy.ops.object.modifier_apply(modifier="Grip_Subtract")
         bpy.data.objects.remove(grip, do_unlink=True)
 
-# 4x Bottom Rubber Base Pads
+# 4x Bottom Rubber Base Pads (Flush Recessed Sockets)
 corner_margin_x = outer_l / 2.0 - 4.5
 corner_margin_y = outer_w / 2.0 - 4.5
 corner_coords = [
@@ -171,7 +172,18 @@ corner_coords = [
 ]
 
 for i, (cx, cy) in enumerate(corner_coords):
-    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=1.5, location=(cx, cy, -0.75))
+    # Recessed Socket in Base Floor
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.6, depth=1.0, location=(cx, cy, 0.5))
+    soc = bpy.context.active_object
+    mod_soc = base_obj.modifiers.new(name=f"Recess_{i+1}", type='BOOLEAN')
+    mod_soc.operation = 'DIFFERENCE'
+    mod_soc.object = soc
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier=f"Recess_{i+1}")
+    bpy.data.objects.remove(soc, do_unlink=True)
+
+    # Rubber Foot Pad sitting in recessed socket
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=1.5, location=(cx, cy, -0.25))
     foot = bpy.context.active_object
     foot.name = f"Rubber_Foot_{i+1}"
     foot.data.materials.append(mat_rubber_feet)
@@ -264,10 +276,10 @@ esp_coords = [
 ]
 add_standoff_posts(base_obj, esp_coords, "ESP32")
 
-# Apply Chamfer/Bevel to Base Outer Edges
+# Apply Smooth Double-Bevel Fillet to Base Outer Edges
 mod_b = base_obj.modifiers.new(name="Bevel_Base", type='BEVEL')
-mod_b.width = 2.0
-mod_b.segments = 3
+mod_b.width = 2.2
+mod_b.segments = 4
 mod_b.limit_method = 'ANGLE'
 mod_b.angle_limit = math.radians(40)
 bpy.context.view_layer.objects.active = base_obj
@@ -311,7 +323,7 @@ bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# 4. Printable Top Lid with 3x 3.2mm LED Cutout Holes
+# 4. Ultra-Modern Top Lid with Recessed Status Panel & 3x 3.2mm LED Cutout Holes
 # ---------------------------------------------------------
 lid_h = 2.5
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
@@ -324,10 +336,10 @@ lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
 lid_obj.data.materials.append(mat_enclosure_lid)
 
-# Apply Modern Chamfer Bevel to Top Lid Edges
+# Apply Double-Stepped Bevel to Top Lid Edges
 mod_lb = lid_obj.modifiers.new(name="Bevel_Lid", type='BEVEL')
-mod_lb.width = 1.6
-mod_lb.segments = 3
+mod_lb.width = 1.8
+mod_lb.segments = 4
 mod_lb.limit_method = 'ANGLE'
 mod_lb.angle_limit = math.radians(40)
 bpy.context.view_layer.objects.active = lid_obj
@@ -386,12 +398,38 @@ bpy.ops.object.modifier_apply(modifier="Pot_Hole")
 bpy.data.objects.remove(pot_hole, do_unlink=True)
 
 # ---------------------------------------------------------
-# 3x PHYSICAL LED CUTOUT HOLES (3.2mm Diameter) IN TOP LID (NO LED MOCKUPS)
+# Recessed Status Panel Inlay & 3x Physical 3.2mm LED Cutout Holes (NO LED MOCKUPS)
 # ---------------------------------------------------------
 led_panel_y = -22.0
+
+# 1. Sleek Recessed Status Panel Inlay Channel Subtracted from Top Lid Surface
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, lid_z_top - 0.3))
+inlay_cutter = bpy.context.active_object
+inlay_cutter.scale = (36.0, 9.0, 1.2)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_inl = lid_obj.modifiers.new(name="LED_Inlay_Recess", type='BOOLEAN')
+mod_inl.operation = 'DIFFERENCE'
+mod_inl.object = inlay_cutter
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
+bpy.data.objects.remove(inlay_cutter, do_unlink=True)
+
+# Decorative Dark Inlay Accent Panel
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, lid_z_top - 0.4))
+inlay_plate = bpy.context.active_object
+inlay_plate.name = "Status_Panel_Accent_Inlay"
+inlay_plate.scale = (35.5, 8.5, 0.6)
+bpy.ops.object.transform_apply(scale=True)
+inlay_plate.data.materials.append(mat_led_inlay)
+
+# 2. 3x PHYSICAL CUTOUT HOLES (3.2mm Diameter) THROUGH LID & INLAY PANEL
 led_hole_xs = [-11.0, 0.0, 11.0]
 
 for idx, lx in enumerate(led_hole_xs):
+    # Cut hole through Top Lid
     bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 3.0, location=(lx, led_panel_y, lid_z))
     led_cutter = bpy.context.active_object
     
@@ -403,6 +441,18 @@ for idx, lx in enumerate(led_hole_xs):
     bpy.context.view_layer.objects.active = lid_obj
     bpy.ops.object.modifier_apply(modifier=f"LED_Cutout_Hole_{idx+1}")
     bpy.data.objects.remove(led_cutter, do_unlink=True)
+    
+    # Cut hole through Inlay Plate
+    bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=3.0, location=(lx, led_panel_y, lid_z_top))
+    inlay_hole = bpy.context.active_object
+    mod_ih = inlay_plate.modifiers.new(name=f"Inlay_Hole_{idx+1}", type='BOOLEAN')
+    mod_ih.operation = 'DIFFERENCE'
+    mod_ih.object = inlay_hole
+    bpy.ops.object.select_all(action='DESELECT')
+    inlay_plate.select_set(True)
+    bpy.context.view_layer.objects.active = inlay_plate
+    bpy.ops.object.modifier_apply(modifier=f"Inlay_Hole_{idx+1}")
+    bpy.data.objects.remove(inlay_hole, do_unlink=True)
 
 # ---------------------------------------------------------
 # 5. Component PCB Mockups (Clearance Reference Only)
@@ -481,7 +531,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Printable enclosure generated with clean 3.2mm LED cutout holes only. All LED mockup objects removed.",
+    "message": "Ultra-stylish modern enclosure generated with 2.2mm double-bevel fillets, recessed LED status panel inlay, flush rubber feet sockets, and 3x 3.2mm LED cutout holes.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

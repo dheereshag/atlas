@@ -8,7 +8,7 @@ Generates color-coded objects with non-overlapping module layout, screw mounting
 2. Enclosure Top Lid with ventilation & corner screw holes (Slate Grey)
 3. LM2596 Buck Converter PCB with 2x M3 mounting holes (Royal Blue)
 4. MAX3232 RS232 PCB with 4x M3 mounting holes (Teal)
-5. MAX3232 DB9 Connector Header (Metallic Silver)
+5. MAX3232 DB9 Connector Header sitting on top of PCB front edge (Metallic Silver)
 6. ESP32 DevKit V1 PCB with 4x M3 mounting holes (Matte Black)
 7. 14x 3D M3 Pan-Head Mounting Screws (Polished Steel)
 """
@@ -227,9 +227,10 @@ add_standoff_posts(base_obj, esp_coords, "ESP32")
 # ---------------------------------------------------------
 # 3. Port Cutouts (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall (aligned with MAX3232 at X = -20.0)
-db9_w, db9_h = 31.5, 15.5
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, floor_t + 4.0 + db9_h / 2.0))
+# DB9 Cutout on Front Wall (aligned with MAX3232 DB9 header at Z = 14.5mm)
+db9_w, db9_h = 31.5, 14.0
+db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 2 + 4 + 2 + 7 = 15.0mm
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
 db9_cutter = bpy.context.active_object
 db9_cutter.scale = (db9_w, wall_t * 3.0, db9_h)
 bpy.ops.object.transform_apply(scale=True)
@@ -326,11 +327,13 @@ bpy.data.objects.remove(pot_hole, do_unlink=True)
 # ---------------------------------------------------------
 # 5. Color-Coded 3D Component Mockups with Screw Holes & Screws
 # ---------------------------------------------------------
-pcb_z_top = floor_t + standoff_h + 2.0  # Top surface of PCB (Z = 2 + 4 + 2 = 8.0mm)
+pcb_thickness = 2.0
+pcb_z_center = floor_t + standoff_h + pcb_thickness / 2.0  # Z = 2 + 4 + 1 = 7.0mm
+pcb_z_top = floor_t + standoff_h + pcb_thickness          # Z = 2 + 4 + 2 = 8.0mm
 
-def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_center, pcb_thickness=2.0, hole_radius=1.5):
+def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_ctr, pcb_thick=2.0, hole_radius=1.5):
     for idx, (hx, hy) in enumerate(hole_coords):
-        bpy.ops.mesh.primitive_cylinder_add(radius=hole_radius, depth=pcb_thickness + 1.0, location=(hx, hy, pcb_z_center))
+        bpy.ops.mesh.primitive_cylinder_add(radius=hole_radius, depth=pcb_thick + 1.0, location=(hx, hy, pcb_z_ctr))
         cutter = bpy.context.active_object
         
         mod = pcb_obj.modifiers.new(name=f"Screw_Hole_{idx+1}", type='BOOLEAN')
@@ -343,49 +346,48 @@ def cut_pcb_screw_holes(pcb_obj, hole_coords, pcb_z_center, pcb_thickness=2.0, h
         bpy.data.objects.remove(cutter, do_unlink=True)
 
 # --- MAX3232 RS232 Module Mockup (Teal PCB) ---
-max_pcb_z = floor_t + standoff_h + 1.0
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, max_cy, max_pcb_z))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, max_cy, pcb_z_center))
 m_max = bpy.context.active_object
 m_max.name = "Mockup_MAX3232_PCB"
-m_max.scale = (32.0, 33.0, 2.0)
+m_max.scale = (32.0, 33.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
 m_max.data.materials.append(mat_max3232)
 
-cut_pcb_screw_holes(m_max, max_coords, max_pcb_z)
+cut_pcb_screw_holes(m_max, max_coords, pcb_z_center)
 for idx, (mx, my) in enumerate(max_coords):
     create_m3_screw(f"Screw_MAX3232_{idx+1}", mx, my, pcb_z_top, shaft_len=6.0)
 
-# DB9 Connector block mockup (Metallic Silver)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, floor_t + 4.0 + 7.5))
+# DB9 Connector block mockup (Metallic Silver) sitting directly ON TOP of MAX3232 PCB top surface
+db9_height = 13.0
+db9_z_pos = pcb_z_top + db9_height / 2.0  # Z = 8.0 + 6.5 = 14.5mm
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, db9_z_pos))
 m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
-m_db9.scale = (31.0, 11.0, 15.0)
+m_db9.scale = (31.0, 11.0, db9_height)
 bpy.ops.object.transform_apply(scale=True)
 m_db9.data.materials.append(mat_db9_header)
 
 # --- LM2596 Buck Converter Mockup (Royal Blue PCB) ---
-lm_pcb_z = floor_t + standoff_h + 1.0
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, lm_pcb_z))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, pcb_z_center))
 m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
-m_lm.scale = (43.2, 21.6, 2.0)
+m_lm.scale = (43.2, 21.6, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
 m_lm.data.materials.append(mat_lm2596)
 
-cut_pcb_screw_holes(m_lm, lm_coords, lm_pcb_z)
+cut_pcb_screw_holes(m_lm, lm_coords, pcb_z_center)
 for idx, (lx, ly) in enumerate(lm_coords):
     create_m3_screw(f"Screw_LM2596_{idx+1}", lx, ly, pcb_z_top, shaft_len=6.0)
 
 # --- ESP32 DevKit V1 Board Mockup (Matte Black PCB) ---
-esp_pcb_z = floor_t + standoff_h + 1.0
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(esp_cx, esp_cy, esp_pcb_z))
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(esp_cx, esp_cy, pcb_z_center))
 m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
-m_esp.scale = (28.5, 51.5, 2.0)
+m_esp.scale = (28.5, 51.5, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
 m_esp.data.materials.append(mat_esp32)
 
-cut_pcb_screw_holes(m_esp, esp_coords, esp_pcb_z)
+cut_pcb_screw_holes(m_esp, esp_coords, pcb_z_center)
 for idx, (ex, ey) in enumerate(esp_coords):
     create_m3_screw(f"Screw_ESP32_{idx+1}", ex, ey, pcb_z_top, shaft_len=6.0)
 
@@ -393,7 +395,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Enclosure generated with non-overlapping module layout, 3D PCB screw holes, internal standoffs, and 14x M3 mounting screws.",
+    "message": "Enclosure generated with DB9 connector seated cleanly on top of MAX3232 PCB surface.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

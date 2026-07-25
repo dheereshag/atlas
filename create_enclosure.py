@@ -244,7 +244,7 @@ max_coords = [
 ]
 add_standoff_posts(base_obj, max_coords, "MAX3232")
 
-esp_cx, esp_cy = 28.0, 0.0
+esp_cx, esp_cy = 28.0, -17.25  # Front edge of ESP32 flush with front inner wall (USB port at Y- face)
 esp_coords = [
     (esp_cx - 11.75, esp_cy - 23.25),
     (esp_cx + 11.75, esp_cy - 23.25),
@@ -297,12 +297,14 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Bezel_Cut")
 bpy.data.objects.remove(db9_bez, do_unlink=True)
 
-# Micro-USB Cutout on Right Side Wall with Chamfer Bezel
+# Micro-USB Cutout on Front Wall (ESP32 USB port is at the short end of the board)
+# The USB sits between the two front screw holes, so it exits through the front wall (Y-)
 usb_w, usb_h = 10.5, 7.5
-usb_y_pos = esp_cy
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(outer_l / 2.0, usb_y_pos, floor_t + 4.0 + usb_h / 2.0))
+usb_x_pos = esp_cx  # centered between front two screw holes at esp_cx
+usb_z_center = floor_t + standoff_h + 2.0 + usb_h / 2.0
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(usb_x_pos, -outer_w / 2.0, usb_z_center))
 usb_cutter = bpy.context.active_object
-usb_cutter.scale = (wall_t * 3.0, usb_w, usb_h)
+usb_cutter.scale = (usb_w, wall_t * 3.0, usb_h)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_usb = base_obj.modifiers.new(name="USB_Cutout", type='BOOLEAN')
@@ -314,10 +316,10 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
-# Outer Micro-USB Chamfer Bezel Cutter
-bpy.ops.mesh.primitive_cone_add(radius1=6.5, radius2=5.0, depth=1.0, location=(outer_l / 2.0 + 0.2, usb_y_pos, floor_t + 4.0 + usb_h / 2.0), rotation=(0, math.radians(90), 0))
+# Outer Micro-USB Chamfer Bezel Cutter on Front Wall
+bpy.ops.mesh.primitive_cone_add(radius1=6.5, radius2=5.0, depth=1.0, location=(usb_x_pos, -outer_w / 2.0 - 0.2, usb_z_center), rotation=(math.radians(-90), 0, 0))
 usb_bez = bpy.context.active_object
-usb_bez.scale = (1.0, 0.8, 1.0)
+usb_bez.scale = (0.8, 1.0, 1.0)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_usb_b = base_obj.modifiers.new(name="USB_Bezel_Cut", type='BOOLEAN')

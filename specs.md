@@ -107,10 +107,10 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **Non-Overlapping Internal Layout Zones**:
   1. **MAX3232 Module (Front Left)**: Centered at `X = -26.0 mm, Y = -22.0 mm`. Bounding box: `[-42.0 to -10.0 mm, -38.5 to -5.5 mm]`.
   2. **LM2596 Converter (Back Left)**: Centered at `X = -25.0 mm, Y = +22.0 mm`. Bounding box: `[-47.5 to -2.5 mm, +12.0 to +32.0 mm]`.
-  3. **ESP32 DevKit Board (Right Side)**: Centered at `X = +28.0 mm, Y = 0.0 mm`. Bounding box: `[+13.75 to +42.25 mm, -25.75 to +25.75 mm]`.
+  3. **ESP32 DevKit Board (Front Right)**: Centered at `X = +28.0 mm, Y = -17.25 mm`. Front edge flush with front inner wall (`Y = -43.0 mm`). Bounding box: `[+13.75 to +42.25 mm, -43.0 to +8.5 mm]`.
 * **External Cutouts Required**:
   1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -26.0 mm, Y = -45.0 mm`) for MAX3232 DB9 connector.
-  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the right side wall (`X = +60.0 mm, Y = 0.0 mm`) for USB flashing/debugging access.
+  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the **front wall** (`X = +28.0 mm, Y = -45.0 mm`) — USB port is at the short end of the ESP32 board, centered between the two front screw holes.
 * **Internal Standoff Posts & Screw Holes**:
   - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
   - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-43.0, +32.0)` & `(-7.0, +12.0)`).

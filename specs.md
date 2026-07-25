@@ -98,11 +98,10 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
   - **Main Base**: Space Charcoal Anodized finish with $2.0\text{ mm}$ chamfered outer edges and 7 vertical side accent channels per side.
   - **Top Lid**: Smoked Polycarbonate finish with $1.6\text{ mm}$ edge chamfers and hexagonal thermal ventilation grid.
   - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
-* **3x Status Indicator LEDs (Top Lid Front Panel)**:
-  1. **Red LED (`Power`)**: $3.0\text{ mm}$ dome, mounted at `X = -11.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  2. **Green LED (`Status / TX`)**: $3.0\text{ mm}$ dome, mounted at `X = 0.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  3. **Blue LED (`Link / RX`)**: $3.0\text{ mm}$ dome, mounted at `X = +11.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  - **Indicator Panel**: Recessed black bezel strip ($36.0\text{ mm} \times 9.0\text{ mm}$) framing all 3 LEDs.
+* **Dual Display & Status Indicators (Top Lid Front Panel)**:
+  1. **7-Segment Display (`Numeric / Status Display`)**: Standard 0.56" 1-Digit 7-segment LED module ($13.0\text{ mm} \times 19.5\text{ mm}$ rectangular cutout), mounted at `X = -10.0 mm, Y = -20.0 mm`.
+  2. **RGB LED (`System Status / Power / Link`)**: $5.0\text{ mm}$ dome ($5.2\text{ mm}$ cutout), mounted at `X = +12.0 mm, Y = -20.0 mm` with metallic bezel ring.
+  - **Indicator Panel**: Recessed black bezel strip ($42.0\text{ mm} \times 24.5\text{ mm}$) framing both the 7-segment display and RGB LED cutouts.
 * **Non-Overlapping Internal Layout Zones**:
   1. **MAX3232 Module (Front Left)**: Centered at `X = -20.0 mm, Y = -16.0 mm`. Bounding box: `[-36.0 to -4.0 mm, -32.5 to 0.5 mm]`.
   2. **LM2596 Converter (Back Left)**: Centered at `X = -18.0 mm, Y = +18.0 mm`. Bounding box: `[-39.6 to +3.6 mm, +7.2 to +28.8 mm]`.

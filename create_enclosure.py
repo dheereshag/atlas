@@ -5,7 +5,7 @@
 Ultra-Modern & Futuristic 3D-Printable Enclosure Generator for Blender (bpy)
 Features advanced 3D-printable industrial design geometry:
 1. Enclosure Base with 2.5mm double-chamfered fillets, port-aware side grooves, chamfered port bezels (DB9 & Micro-USB), rear aero-vents & flush rubber feet sockets
-2. Ultra-Stylish Top Lid with dual-plane recessed border, debossed sci-fi accent lines, counter-bored M3 screw sockets, chamfered status badge channel, 3x 3.2mm LED cutouts with countersinks, and honeycomb vent grid
+2. Ultra-Stylish Top Lid with dual-plane recessed border, debossed sci-fi accent lines, counter-bored M3 screw sockets, chamfered status badge channel, 1x 0.56-inch 7-segment LED cutout and 1x 5.2mm RGB LED cutout, and honeycomb vent grid
 3. Clearance Reference PCB Mockups (LM2596, MAX3232, ESP32)
 4. Single uniform 3D-printable filament material (Mat_3D_Print_Filament)
 """
@@ -440,15 +440,17 @@ bpy.ops.object.modifier_apply(modifier="Pot_Funnel")
 bpy.data.objects.remove(pot_funnel, do_unlink=True)
 
 # ---------------------------------------------------------
-# Recessed Status Badge Channel & 3x Physical 3.2mm LED Cutout Holes with 0.5mm Chamfered Countersinks
+# Recessed Status Badge Channel & Dual Cutouts (1x 0.56" 7-Segment LED + 1x 5.2mm RGB LED)
 # ---------------------------------------------------------
-led_panel_y = -22.0
-led_hole_xs = [-11.0, 0.0, 11.0]
+seg_panel_y = -20.0
+seg_x = -10.0
+rgb_x = 12.0
+seg_w, seg_h = 13.0, 19.5
 
-# Recessed LED Status Badge Channel
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, led_panel_y, lid_z_top - 0.4))
+# Combined Recessed Status Badge Channel
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(1.0, seg_panel_y, lid_z_top - 0.4))
 inlay_cutter = bpy.context.active_object
-inlay_cutter.scale = (36.0, 9.0, 1.2)
+inlay_cutter.scale = (42.0, 24.5, 1.2)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_inl = lid_obj.modifiers.new(name="LED_Inlay_Recess", type='BOOLEAN')
@@ -460,32 +462,60 @@ bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
 bpy.data.objects.remove(inlay_cutter, do_unlink=True)
 
-# 3x Physical 3.2mm LED Through-Hole Cutouts (Radius 1.6mm = 3.2mm Diameter) + 0.5mm Chamfer Countersinks
-for idx, lx in enumerate(led_hole_xs):
-    # Through-hole (3.2mm diameter)
-    bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 3.0, location=(lx, led_panel_y, lid_z))
-    led_cutter = bpy.context.active_object
-    
-    mod_led = lid_obj.modifiers.new(name=f"LED_Cutout_Hole_{idx+1}", type='BOOLEAN')
-    mod_led.operation = 'DIFFERENCE'
-    mod_led.object = led_cutter
-    bpy.ops.object.select_all(action='DESELECT')
-    lid_obj.select_set(True)
-    bpy.context.view_layer.objects.active = lid_obj
-    bpy.ops.object.modifier_apply(modifier=f"LED_Cutout_Hole_{idx+1}")
-    bpy.data.objects.remove(led_cutter, do_unlink=True)
-    
-    # Chamfered funnel countersink at top of LED hole
-    bpy.ops.mesh.primitive_cone_add(radius1=2.2, radius2=1.6, depth=0.8, location=(lx, led_panel_y, lid_z_top - 0.4))
-    led_cs = bpy.context.active_object
-    mod_lcs = lid_obj.modifiers.new(name=f"LED_CS_{idx+1}", type='BOOLEAN')
-    mod_lcs.operation = 'DIFFERENCE'
-    mod_lcs.object = led_cs
-    bpy.ops.object.select_all(action='DESELECT')
-    lid_obj.select_set(True)
-    bpy.context.view_layer.objects.active = lid_obj
-    bpy.ops.object.modifier_apply(modifier=f"LED_CS_{idx+1}")
-    bpy.data.objects.remove(led_cs, do_unlink=True)
+# 1x 7-Segment Display Rectangular Cutout Hole (13.0mm x 19.5mm)
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z))
+seg_cutter = bpy.context.active_object
+seg_cutter.scale = (seg_w, seg_h, lid_h + 3.0)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_seg = lid_obj.modifiers.new(name="7Seg_Cutout_Hole", type='BOOLEAN')
+mod_seg.operation = 'DIFFERENCE'
+mod_seg.object = seg_cutter
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="7Seg_Cutout_Hole")
+bpy.data.objects.remove(seg_cutter, do_unlink=True)
+
+# Outer Bezel Recess for 7-Segment Display Cutout
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z_top - 0.3))
+seg_bez = bpy.context.active_object
+seg_bez.scale = (seg_w + 1.6, seg_h + 1.6, 0.8)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_seg_b = lid_obj.modifiers.new(name="7Seg_Bezel_Cut", type='BOOLEAN')
+mod_seg_b.operation = 'DIFFERENCE'
+mod_seg_b.object = seg_bez
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="7Seg_Bezel_Cut")
+bpy.data.objects.remove(seg_bez, do_unlink=True)
+
+# 1x Physical 5.2mm RGB LED Through-Hole Cutout + Chamfer Countersink
+bpy.ops.mesh.primitive_cylinder_add(radius=2.6, depth=lid_h + 3.0, location=(rgb_x, seg_panel_y, lid_z))
+rgb_cutter = bpy.context.active_object
+
+mod_rgb = lid_obj.modifiers.new(name="RGB_Cutout_Hole", type='BOOLEAN')
+mod_rgb.operation = 'DIFFERENCE'
+mod_rgb.object = rgb_cutter
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="RGB_Cutout_Hole")
+bpy.data.objects.remove(rgb_cutter, do_unlink=True)
+
+# Chamfered funnel countersink at top of RGB LED hole
+bpy.ops.mesh.primitive_cone_add(radius1=3.2, radius2=2.6, depth=0.8, location=(rgb_x, seg_panel_y, lid_z_top - 0.4))
+rgb_cs = bpy.context.active_object
+mod_rgb_cs = lid_obj.modifiers.new(name="RGB_CS", type='BOOLEAN')
+mod_rgb_cs.operation = 'DIFFERENCE'
+mod_rgb_cs.object = rgb_cs
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="RGB_CS")
+bpy.data.objects.remove(rgb_cs, do_unlink=True)
 
 # ---------------------------------------------------------
 # 5. Clearance Reference PCB Mockups
@@ -547,7 +577,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 result = {
     "status": "success",
-    "message": "Futuristic enclosure geometry generated with chamfered DB9 & Micro-USB port bezels, rear aero-vents, sci-fi debossed lid accents, counter-bored M3 screw sockets, and chamfered 3.2mm LED cutouts.",
+    "message": "Futuristic enclosure geometry generated with chamfered DB9 & Micro-USB port bezels, rear aero-vents, sci-fi debossed lid accents, counter-bored M3 screw sockets, 1x 0.56-inch 7-segment display cutout, and 1x 5.2mm RGB LED cutout.",
     "remaining_objects_count": len(bpy.data.objects)
 }
 """

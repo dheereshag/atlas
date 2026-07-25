@@ -95,13 +95,15 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **Wall Thickness**: $2.0\text{ mm}$ minimum (standard FDM print strength)
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
 * **Modern Case Aesthetics & Materials**:
-  - **Main Base**: Space Charcoal Anodized finish with $2.5\text{ mm}$ chamfered outer edges and 7 vertical side accent channels per side.
-  - **Top Lid**: Smoked Polycarbonate finish with $1.8\text{ mm}$ edge chamfers and hexagonal thermal ventilation grid.
+  - **Main Base**: Space Charcoal Anodized finish with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, front air intake scoops, and 7 vertical side accent channels per side.
+  - **Top Lid**: Smoked Metallic Polycarbonate finish with $1.8\text{ mm}$ edge chamfers, debossed sci-fi accent lines, and hexagonal thermal ventilation grid.
+  - **GLUVOK Corporate Branding**:
+    1. **Primary Top Logo Engraving**: $0.8\text{ mm}$ deep 3D-printed debossed/engraved `"G L U V O K"` lettering carved directly into the top lid surface centered at `X = 0.0 mm, Y = +26.0 mm`.
   - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
 * **Dual Display & Status Indicators (Top Lid Front Panel)**:
   1. **7-Segment Display (`Numeric / Status Display`)**: Standard 0.56" 1-Digit 7-segment LED module ($13.0\text{ mm} \times 19.5\text{ mm}$ rectangular cutout), mounted at `X = -10.0 mm, Y = -22.0 mm`.
   2. **RGB LED (`System Status / Power / Link`)**: $5.0\text{ mm}$ dome ($5.2\text{ mm}$ cutout), mounted at `X = +12.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  - **Indicator Panel**: Recessed black bezel strip ($42.0\text{ mm} \times 24.5\text{ mm}$) framing both the 7-segment display and RGB LED cutouts.
+  - **Indicator Panel**: Recessed black bezel strip ($42.0\text{ mm} \times 24.5\text{ mm}$) framing the 7-segment display and RGB LED cutouts.
 * **Non-Overlapping Internal Layout Zones**:
   1. **MAX3232 Module (Front Left)**: Centered at `X = -26.0 mm, Y = -22.0 mm`. Bounding box: `[-42.0 to -10.0 mm, -38.5 to -5.5 mm]`.
   2. **LM2596 Converter (Back Left)**: Centered at `X = -25.0 mm, Y = +22.0 mm`. Bounding box: `[-47.5 to -2.5 mm, +12.0 to +32.0 mm]`.
@@ -109,7 +111,6 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **External Cutouts Required**:
   1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -26.0 mm, Y = -45.0 mm`) for MAX3232 DB9 connector.
   2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the right side wall (`X = +60.0 mm, Y = 0.0 mm`) for USB flashing/debugging access.
-  3. **Ventilation / Tuning Access**: Top lid potentiometer access hole centered over LM2596 (`X = -25.0 mm, Y = +22.0 mm`).
 * **Internal Standoff Posts & Screw Holes**:
   - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
   - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-43.0, +32.0)` & `(-7.0, +12.0)`).

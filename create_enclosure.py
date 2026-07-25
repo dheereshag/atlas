@@ -132,6 +132,23 @@ for k in [-1, 0, 1]:
     bpy.ops.object.modifier_apply(modifier="Rear_Vent")
     bpy.data.objects.remove(r_vent, do_unlink=True)
 
+# 4x Base Tactical Corner Facet Cuts
+for cx_sign, cy_sign in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+    px = cx_sign * (outer_l / 2.0)
+    py = cy_sign * (outer_w / 2.0)
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(px, py, outer_h / 2.0))
+    cf = bpy.context.active_object
+    cf.scale = (8.0, 8.0, outer_h + 2.0)
+    cf.rotation_euler = (0, 0, math.radians(45))
+    bpy.ops.object.transform_apply(scale=True, rotation=True)
+    
+    mod_cf = base_obj.modifiers.new(name="Corner_Facet", type='BOOLEAN')
+    mod_cf.operation = 'DIFFERENCE'
+    mod_cf.object = cf
+    bpy.context.view_layer.objects.active = base_obj
+    bpy.ops.object.modifier_apply(modifier="Corner_Facet")
+    bpy.data.objects.remove(cf, do_unlink=True)
+
 # 4x Bottom Rubber Base Pad Recessed Sockets
 corner_margin_x = outer_l / 2.0 - 4.5
 corner_margin_y = outer_w / 2.0 - 4.5
@@ -400,8 +417,8 @@ for row in range(-2, 3):
         hx = col * 5.2 + (2.6 if row % 2 != 0 else 0)
         hy = row * 4.5 + 8.0
         
-        # Skip pot hole region & LED panel region
-        if math.hypot(hx - lm_cx, hy - lm_cy) < 5.0 or hy < -14.0:
+        # Skip GLUVOK badge region & LED panel region
+        if hy < -14.0 or hy > 18.0:
             continue
             
         bpy.ops.mesh.primitive_cylinder_add(vertices=6, radius=hex_r, depth=lid_h + 2.0, location=(hx, hy, lid_z))
@@ -416,31 +433,8 @@ for row in range(-2, 3):
         bpy.ops.object.modifier_apply(modifier="Hex_Vent")
         bpy.data.objects.remove(hex_vent, do_unlink=True)
 
-# Potentiometer Tuning Access Port with Chamfered Funnel Bezel
-bpy.ops.mesh.primitive_cylinder_add(radius=2.5, depth=lid_h + 2.0, location=(lm_cx, lm_cy, lid_z))
-pot_hole = bpy.context.active_object
-mod_pot = lid_obj.modifiers.new(name="Pot_Hole", type='BOOLEAN')
-mod_pot.operation = 'DIFFERENCE'
-mod_pot.object = pot_hole
-bpy.ops.object.select_all(action='DESELECT')
-lid_obj.select_set(True)
-bpy.context.view_layer.objects.active = lid_obj
-bpy.ops.object.modifier_apply(modifier="Pot_Hole")
-bpy.data.objects.remove(pot_hole, do_unlink=True)
-
-bpy.ops.mesh.primitive_cone_add(radius1=4.0, radius2=2.5, depth=1.0, location=(lm_cx, lm_cy, lid_z_top - 0.5))
-pot_funnel = bpy.context.active_object
-mod_fn = lid_obj.modifiers.new(name="Pot_Funnel", type='BOOLEAN')
-mod_fn.operation = 'DIFFERENCE'
-mod_fn.object = pot_funnel
-bpy.ops.object.select_all(action='DESELECT')
-lid_obj.select_set(True)
-bpy.context.view_layer.objects.active = lid_obj
-bpy.ops.object.modifier_apply(modifier="Pot_Funnel")
-bpy.data.objects.remove(pot_funnel, do_unlink=True)
-
 # ---------------------------------------------------------
-# Recessed Status Badge Channel & Dual Cutouts (1x 0.56" 7-Segment LED + 1x 5.2mm RGB LED)
+# Recessed Status Badge Channel & Dual Cutouts
 # ---------------------------------------------------------
 seg_panel_y = -22.0
 seg_x = -10.0
@@ -461,6 +455,35 @@ lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
 bpy.data.objects.remove(inlay_cutter, do_unlink=True)
+
+# ---------------------------------------------------------
+# GLUVOK Corporate Branding (Direct 3D Engraved Debossing into Lid)
+# ---------------------------------------------------------
+# Primary Top Lid Engraving "G L U V O K"
+bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top))
+txt_brand = bpy.context.active_object
+txt_brand.name = "Text_GLUVOK_Engrave"
+txt_brand.data.body = "G L U V O K"
+txt_brand.data.size = 5.2
+txt_brand.data.extrude = 1.2
+txt_brand.data.align_x = 'CENTER'
+txt_brand.data.align_y = 'CENTER'
+
+bpy.ops.object.select_all(action='DESELECT')
+txt_brand.select_set(True)
+bpy.context.view_layer.objects.active = txt_brand
+bpy.ops.object.convert(target='MESH')
+
+txt_brand.location.z = lid_z_top - 0.4
+
+mod_eng = lid_obj.modifiers.new(name="GLUVOK_Engrave", type='BOOLEAN')
+mod_eng.operation = 'DIFFERENCE'
+mod_eng.object = txt_brand
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="GLUVOK_Engrave")
+bpy.data.objects.remove(txt_brand, do_unlink=True)
 
 # 1x 7-Segment Display Rectangular Cutout Hole (13.0mm x 19.5mm)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z))

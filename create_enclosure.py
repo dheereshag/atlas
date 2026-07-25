@@ -51,9 +51,9 @@ mat_filament = get_3d_print_material()
 # ---------------------------------------------------------
 # Enclosure Specs (in mm)
 # ---------------------------------------------------------
-outer_l = 90.0   # X-axis length
-outer_w = 70.0   # Y-axis width
-outer_h = 24.0   # Z-axis height
+outer_l = 120.0  # X-axis length
+outer_w = 90.0   # Y-axis width
+outer_h = 28.0   # Z-axis height
 wall_t = 2.0     # Wall thickness
 floor_t = 2.0    # Floor thickness
 standoff_h = 4.0 # Height of PCB standoffs from floor
@@ -211,14 +211,14 @@ def add_standoff_posts(base_object, coords, prefix, radius=3.0, height=standoff_
         bpy.data.objects.remove(st_post, do_unlink=True)
 
 # Layout Coordinates for All 3 Modules
-lm_cx, lm_cy = -18.0, 18.0
+lm_cx, lm_cy = -25.0, 22.0
 lm_coords = [
-    (lm_cx - 18.0, lm_cy - 10.0),
-    (lm_cx + 18.0, lm_cy + 10.0)
+    (lm_cx - 18.0, lm_cy + 10.0),
+    (lm_cx + 18.0, lm_cy - 10.0)
 ]
 add_standoff_posts(base_obj, lm_coords, "LM2596")
 
-max_cx, max_cy = -20.0, -16.0
+max_cx, max_cy = -26.0, -22.0
 max_coords = [
     (max_cx - 13.5, max_cy - 13.0),
     (max_cx + 13.5, max_cy - 13.0),
@@ -227,7 +227,7 @@ max_coords = [
 ]
 add_standoff_posts(base_obj, max_coords, "MAX3232")
 
-esp_cx, esp_cy = 24.0, 0.0
+esp_cx, esp_cy = 28.0, 0.0
 esp_coords = [
     (esp_cx - 11.75, esp_cy - 23.25),
     (esp_cx + 11.75, esp_cy - 23.25),
@@ -442,7 +442,7 @@ bpy.data.objects.remove(pot_funnel, do_unlink=True)
 # ---------------------------------------------------------
 # Recessed Status Badge Channel & Dual Cutouts (1x 0.56" 7-Segment LED + 1x 5.2mm RGB LED)
 # ---------------------------------------------------------
-seg_panel_y = -20.0
+seg_panel_y = -22.0
 seg_x = -10.0
 rgb_x = 12.0
 seg_w, seg_h = 13.0, 19.5
@@ -546,7 +546,7 @@ bpy.ops.object.transform_apply(scale=True)
 m_max.data.materials.append(mat_filament)
 cut_pcb_screw_holes(m_max, max_coords, pcb_z_center)
 
-db9_height = 13.0
+db9_height = 16.0
 db9_z_pos = floor_t + standoff_h + pcb_thickness + db9_height / 2.0
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w/2.0 + 5.5, db9_z_pos))
 m_db9 = bpy.context.active_object
@@ -559,7 +559,7 @@ m_db9.data.materials.append(mat_filament)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, pcb_z_center))
 m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
-m_lm.scale = (43.2, 21.6, pcb_thickness)
+m_lm.scale = (45.0, 20.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
 m_lm.data.materials.append(mat_filament)
 cut_pcb_screw_holes(m_lm, lm_coords, pcb_z_center)

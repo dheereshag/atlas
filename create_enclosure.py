@@ -356,16 +356,13 @@ lid_h = 2.8
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
 lid_z_top = lid_z + lid_h / 2.0
 
-# Solid Top Lid Block
+# Solid Top Lid Block (All Outer Borders Black)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z))
 lid_obj = bpy.context.active_object
 lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
-
-# Assign Material Slots: Slot 0 = Black (main body), Slot 1 = White (boundary rim)
 lid_obj.data.materials.append(mat_black)
-lid_obj.data.materials.append(mat_white)
 
 # Dual-Plane Recessed Center Border Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))
@@ -382,15 +379,70 @@ bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Top_Border_Recess")
 bpy.data.objects.remove(top_recess, do_unlink=True)
 
-# Assign White material (Slot 1) to outer boundary rim and all 4 inner lining walls
-inner_bound_x = (outer_l / 2.0) - 4.2
-inner_bound_y = (outer_w / 2.0) - 4.2
-
+# Ensure ALL polygons on lid_obj use Mat_Filament_Black
 for poly in lid_obj.data.polygons:
-    if (abs(poly.center.x) < inner_bound_x) and (abs(poly.center.y) < inner_bound_y) and (poly.normal.z > 0.5):
-        poly.material_index = 0  # Mat_Filament_Black (inner recessed top surface)
-    else:
-        poly.material_index = 1  # Mat_Filament_White (outer boundary rim & all 4 inner lining walls)
+    poly.material_index = 0
+
+# ---------------------------------------------------------
+# Symmetrical 4-Sided White Inner Lining Frame
+# ---------------------------------------------------------
+# Create 4-sided White inner lining accent frame around the perimeter step
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
+lining_outer = bpy.context.active_object
+lining_outer.scale = (outer_l - 7.2, outer_w - 7.2, 0.4)
+bpy.ops.object.transform_apply(scale=True)
+
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
+lining_inner = bpy.context.active_object
+lining_inner.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_li = lining_outer.modifiers.new(name="Sub_Inner_Lining", type='BOOLEAN')
+mod_li.operation = 'DIFFERENCE'
+mod_li.object = lining_inner
+bpy.ops.object.select_all(action='DESELECT')
+lining_outer.select_set(True)
+bpy.context.view_layer.objects.active = lining_outer
+bpy.ops.object.modifier_apply(modifier="Sub_Inner_Lining")
+bpy.data.objects.remove(lining_inner, do_unlink=True)
+
+lining_outer.data.materials.append(mat_white)
+
+# Cut debossed pocket in Lid for the 4-sided lining frame
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
+lining_cutter = bpy.context.active_object
+lining_cutter.scale = (outer_l - 7.2, outer_w - 7.2, 0.6)
+bpy.ops.object.transform_apply(scale=True)
+
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
+lining_cut_inner = bpy.context.active_object
+lining_cut_inner.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+bpy.ops.object.transform_apply(scale=True)
+
+mod_lc = lining_cutter.modifiers.new(name="Sub_Inner_Cutter", type='BOOLEAN')
+mod_lc.operation = 'DIFFERENCE'
+mod_lc.object = lining_cut_inner
+bpy.ops.object.select_all(action='DESELECT')
+lining_cutter.select_set(True)
+bpy.context.view_layer.objects.active = lining_cutter
+bpy.ops.object.modifier_apply(modifier="Sub_Inner_Cutter")
+bpy.data.objects.remove(lining_cut_inner, do_unlink=True)
+
+mod_eng = lid_obj.modifiers.new(name="Lining_Engrave", type='BOOLEAN')
+mod_eng.operation = 'DIFFERENCE'
+mod_eng.object = lining_cutter
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.modifier_apply(modifier="Lining_Engrave")
+bpy.data.objects.remove(lining_cutter, do_unlink=True)
+
+# Join White 4-sided lining frame into lid_obj
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+lining_outer.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.join()
 
 # Debossed Geometric Sci-Fi Accent Lines
 for line_y in [-18.0, 18.0]:

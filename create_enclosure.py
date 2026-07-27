@@ -367,7 +367,7 @@ lid_obj.data.materials.append(mat_black)
 # Dual-Plane Recessed Center Border Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))
 top_recess = bpy.context.active_object
-top_recess.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+top_recess.scale = (outer_l - 22.0, outer_w - 18.0, 1.0)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_tr = lid_obj.modifiers.new(name="Top_Border_Recess", type='BOOLEAN')
@@ -386,15 +386,15 @@ for poly in lid_obj.data.polygons:
 # ---------------------------------------------------------
 # Symmetrical 4-Sided White Inner Lining Frame
 # ---------------------------------------------------------
-# Create 4-sided White inner lining accent frame around the perimeter step
+# Create 4-sided White inner lining accent frame along the grooving step inside screw holes
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
 lining_outer = bpy.context.active_object
-lining_outer.scale = (outer_l - 7.2, outer_w - 7.2, 0.4)
+lining_outer.scale = (outer_l - 21.2, outer_w - 17.2, 0.4)
 bpy.ops.object.transform_apply(scale=True)
 
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
 lining_inner = bpy.context.active_object
-lining_inner.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+lining_inner.scale = (outer_l - 22.0, outer_w - 18.0, 1.0)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_li = lining_outer.modifiers.new(name="Sub_Inner_Lining", type='BOOLEAN')
@@ -411,12 +411,12 @@ lining_outer.data.materials.append(mat_white)
 # Cut debossed pocket in Lid for the 4-sided lining frame
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
 lining_cutter = bpy.context.active_object
-lining_cutter.scale = (outer_l - 7.2, outer_w - 7.2, 0.6)
+lining_cutter.scale = (outer_l - 21.2, outer_w - 17.2, 0.6)
 bpy.ops.object.transform_apply(scale=True)
 
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.2))
 lining_cut_inner = bpy.context.active_object
-lining_cut_inner.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
+lining_cut_inner.scale = (outer_l - 22.0, outer_w - 18.0, 1.0)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_lc = lining_cutter.modifiers.new(name="Sub_Inner_Cutter", type='BOOLEAN')
@@ -448,7 +448,7 @@ bpy.ops.object.join()
 for line_y in [-18.0, 18.0]:
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, line_y, lid_z_top - 0.2))
     line_cut = bpy.context.active_object
-    line_cut.scale = (outer_l - 12.0, 0.8, 0.6)
+    line_cut.scale = (outer_l - 28.0, 0.8, 0.6)
     bpy.ops.object.transform_apply(scale=True)
     
     mod_lc = lid_obj.modifiers.new(name="Debossed_Line", type='BOOLEAN')

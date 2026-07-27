@@ -244,12 +244,12 @@ max_coords = [
 ]
 add_standoff_posts(base_obj, max_coords, "MAX3232")
 
-esp_cx, esp_cy = 28.0, -17.25  # Front edge of ESP32 flush with front inner wall (USB port at Y- face)
+esp_cx, esp_cy = 28.0, -18.0  # Front edge of ESP32 flush with front inner wall (USB port at Y- face)
 esp_coords = [
-    (esp_cx - 11.75, esp_cy - 23.25),
-    (esp_cx + 11.75, esp_cy - 23.25),
-    (esp_cx - 11.75, esp_cy + 23.25),
-    (esp_cx + 11.75, esp_cy + 23.25)
+    (esp_cx - 11.5, esp_cy - 22.5),
+    (esp_cx + 11.5, esp_cy - 22.5),
+    (esp_cx - 11.5, esp_cy + 22.5),
+    (esp_cx + 11.5, esp_cy + 22.5)
 ]
 add_standoff_posts(base_obj, esp_coords, "ESP32")
 
@@ -593,7 +593,7 @@ cut_pcb_screw_holes(m_lm, lm_coords, pcb_z_center)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(esp_cx, esp_cy, pcb_z_center))
 m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
-m_esp.scale = (28.5, 51.5, pcb_thickness)
+m_esp.scale = (28.0, 50.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
 m_esp.data.materials.append(mat_filament)
 cut_pcb_screw_holes(m_esp, esp_coords, pcb_z_center)

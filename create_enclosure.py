@@ -315,14 +315,14 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Bezel_Cut")
 bpy.data.objects.remove(db9_bez, do_unlink=True)
 
-# Micro-USB Cutout on Front Wall (ESP32 USB port is at the short end of the board)
-# The USB sits between the two front screw holes, so it exits through the front wall (Y-)
+# Micro-USB Cutout from the inside, leaving 0.4mm membrane on the outside
 usb_w, usb_h = 10.5, 7.5
 usb_x_pos = esp_cx  # centered between front two screw holes at esp_cx
 usb_z_center = floor_t + standoff_h + 2.0 + usb_h / 2.0
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(usb_x_pos, -outer_w / 2.0, usb_z_center))
+# Y center chosen to cut from inside cavity (starts at Y=-43.0) up to Y=-44.6
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(usb_x_pos, -42.3, usb_z_center))
 usb_cutter = bpy.context.active_object
-usb_cutter.scale = (usb_w, wall_t * 3.0, usb_h)
+usb_cutter.scale = (usb_w, 4.6, usb_h)
 bpy.ops.object.transform_apply(scale=True)
 
 mod_usb = base_obj.modifiers.new(name="USB_Cutout", type='BOOLEAN')
@@ -334,20 +334,20 @@ bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="USB_Cutout")
 bpy.data.objects.remove(usb_cutter, do_unlink=True)
 
-# Outer Micro-USB Chamfer Bezel Cutter on Front Wall
-bpy.ops.mesh.primitive_cone_add(radius1=6.5, radius2=5.0, depth=1.0, location=(usb_x_pos, -outer_w / 2.0 - 0.2, usb_z_center), rotation=(math.radians(-90), 0, 0))
-usb_bez = bpy.context.active_object
-usb_bez.scale = (0.8, 1.0, 1.0)
+# Shallow Outer USB Recess (0.2mm deep score line)
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(usb_x_pos, -45.0, usb_z_center))
+usb_groove = bpy.context.active_object
+usb_groove.scale = (usb_w + 1.2, 0.4, usb_h + 1.2)
 bpy.ops.object.transform_apply(scale=True)
 
-mod_usb_b = base_obj.modifiers.new(name="USB_Bezel_Cut", type='BOOLEAN')
-mod_usb_b.operation = 'DIFFERENCE'
-mod_usb_b.object = usb_bez
+mod_usb_g = base_obj.modifiers.new(name="USB_Outer_Groove", type='BOOLEAN')
+mod_usb_g.operation = 'DIFFERENCE'
+mod_usb_g.object = usb_groove
 bpy.ops.object.select_all(action='DESELECT')
 base_obj.select_set(True)
 bpy.context.view_layer.objects.active = base_obj
-bpy.ops.object.modifier_apply(modifier="USB_Bezel_Cut")
-bpy.data.objects.remove(usb_bez, do_unlink=True)
+bpy.ops.object.modifier_apply(modifier="USB_Outer_Groove")
+bpy.data.objects.remove(usb_groove, do_unlink=True)
 
 # ---------------------------------------------------------
 # 4. Ultra-Stylish Top Lid with Sci-Fi Debossed Accents & Sockets
@@ -590,35 +590,35 @@ txt_brand.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.join()
 
-# 1x 7-Segment Display Rectangular Cutout Hole (13.0mm x 19.5mm)
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z))
-seg_cutter = bpy.context.active_object
-seg_cutter.scale = (seg_w, seg_h, lid_h + 3.0)
+# 7-Segment Display pocket cut from underside of lid, leaving 0.4mm membrane
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, 33.2))
+seg_pocket = bpy.context.active_object
+seg_pocket.scale = (seg_w, seg_h, 2.4)
 bpy.ops.object.transform_apply(scale=True)
 
-mod_seg = lid_obj.modifiers.new(name="7Seg_Cutout_Hole", type='BOOLEAN')
+mod_seg = lid_obj.modifiers.new(name="7Seg_Membrane_Pocket", type='BOOLEAN')
 mod_seg.operation = 'DIFFERENCE'
-mod_seg.object = seg_cutter
+mod_seg.object = seg_pocket
 bpy.ops.object.select_all(action='DESELECT')
 lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
-bpy.ops.object.modifier_apply(modifier="7Seg_Cutout_Hole")
-bpy.data.objects.remove(seg_cutter, do_unlink=True)
+bpy.ops.object.modifier_apply(modifier="7Seg_Membrane_Pocket")
+bpy.data.objects.remove(seg_pocket, do_unlink=True)
 
-# Outer Bezel Recess for 7-Segment Display Cutout
-bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z_top - 0.3))
-seg_bez = bpy.context.active_object
-seg_bez.scale = (seg_w + 1.6, seg_h + 1.6, 0.8)
+# Shallow Bezel Groove on top of 7-segment membrane (0.2mm deep score line)
+bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, 34.8))
+seg_groove = bpy.context.active_object
+seg_groove.scale = (seg_w + 1.2, seg_h + 1.2, 0.4)
 bpy.ops.object.transform_apply(scale=True)
 
-mod_seg_b = lid_obj.modifiers.new(name="7Seg_Bezel_Cut", type='BOOLEAN')
-mod_seg_b.operation = 'DIFFERENCE'
-mod_seg_b.object = seg_bez
+mod_seg_g = lid_obj.modifiers.new(name="7Seg_Outer_Groove", type='BOOLEAN')
+mod_seg_g.operation = 'DIFFERENCE'
+mod_seg_g.object = seg_groove
 bpy.ops.object.select_all(action='DESELECT')
 lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
-bpy.ops.object.modifier_apply(modifier="7Seg_Bezel_Cut")
-bpy.data.objects.remove(seg_bez, do_unlink=True)
+bpy.ops.object.modifier_apply(modifier="7Seg_Outer_Groove")
+bpy.data.objects.remove(seg_groove, do_unlink=True)
 
 # 1x Physical 5.2mm RGB LED Through-Hole Cutout + Chamfer Countersink
 bpy.ops.mesh.primitive_cylinder_add(radius=2.6, depth=lid_h + 3.0, location=(rgb_x, seg_panel_y, lid_z))

@@ -105,7 +105,7 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
     1. **Primary Top Logo Engraving**: $0.8\text{ mm}$ deep 3D-printed debossed/engraved `"G L U V O K"` lettering carved directly into the top lid surface centered at `X = 0.0 mm, Y = +26.0 mm`.
   - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
 * **Dual Display & Status Indicators (Top Lid Front Panel)**:
-  1. **7-Segment Display (`Numeric / Status Display`)**: Standard 0.56" 1-Digit 7-segment LED module ($13.0\text{ mm} \times 19.5\text{ mm}$ rectangular cutout), mounted at `X = -10.0 mm, Y = -22.0 mm`.
+  1. **7-Segment Display (`Numeric / Status Display`)**: Standard 0.56" 1-Digit 7-segment LED module ($13.0\text{ mm} \times 19.5\text{ mm}$ flat $0.4\text{ mm}$ thick push membrane), mounted at `X = -10.0 mm, Y = -22.0 mm`.
   2. **RGB LED (`System Status / Power / Link`)**: $5.0\text{ mm}$ dome ($5.2\text{ mm}$ cutout), mounted at `X = +12.0 mm, Y = -22.0 mm` with metallic bezel ring.
   - **Indicator Panel**: Recessed black bezel strip ($42.0\text{ mm} \times 24.5\text{ mm}$) framing the 7-segment display and RGB LED cutouts.
 * **Non-Overlapping Internal Layout Zones**:
@@ -114,7 +114,7 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
   3. **ESP32 DevKit Board (Front Right)**: Centered at `X = +28.0 mm, Y = -18.0 mm`. Front edge flush with front inner wall (`Y = -43.0 mm`). Bounding box: `[+14.0 to +42.0 mm, -43.0 to +7.0 mm]`.
 * **External Cutouts Required**:
   1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -26.0 mm, Y = -45.0 mm`) for MAX3232 DB9 connector.
-  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the **front wall** (`X = +28.0 mm, Y = -45.0 mm`) — USB port is at the short end of the ESP32 board, centered between the two front screw holes.
+  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ flat $0.4\text{ mm}$ thick knockout membrane with a $0.2\text{ mm}$ score line on the **front wall** (`X = +28.0 mm, Y = -45.0 mm`) — USB port is at the short end of the ESP32 board, centered between the two front screw holes.
 * **Internal Standoff Posts & Screw Holes**:
   - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
   - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-43.0, +32.0)` & `(-7.0, +12.0)`).

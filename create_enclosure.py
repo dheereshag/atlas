@@ -178,7 +178,7 @@ corner_coords = [
 ]
 
 for i, (cx, cy) in enumerate(corner_coords):
-    bpy.ops.mesh.primitive_cylinder_add(radius=4.6, depth=1.0, location=(cx, cy, 0.5))
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=1.0, location=(cx, cy, 0.5))
     soc = bpy.context.active_object
     mod_soc = base_obj.modifiers.new(name=f"Recess_{i+1}", type='BOOLEAN')
     mod_soc.operation = 'DIFFERENCE'
@@ -191,7 +191,7 @@ for i, (cx, cy) in enumerate(corner_coords):
 # 2. Internal Standoffs & Corner Posts
 # ---------------------------------------------------------
 for i, (cx, cy) in enumerate(corner_coords):
-    bpy.ops.mesh.primitive_cylinder_add(radius=4.0, depth=inner_h, location=(cx, cy, floor_t + inner_h / 2.0))
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=inner_h, location=(cx, cy, floor_t + inner_h / 2.0))
     post = bpy.context.active_object
     post.name = f"Corner_Post_{i+1}"
     
@@ -283,7 +283,7 @@ bpy.ops.object.modifier_apply(modifier="Bevel_Base")
 # ---------------------------------------------------------
 # 3. Port Cutouts with Chamfered Port Bezels (DB9 Front & Micro-USB Side)
 # ---------------------------------------------------------
-# DB9 Cutout on Front Wall with 45-degree Chamfer Bezel
+# DB9 Cutout on Front Wall
 db9_w, db9_h = 31.5, 14.0
 db9_z_center = floor_t + standoff_h + 2.0 + db9_h / 2.0  # Z = 15.0mm
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(max_cx, -outer_w / 2.0, db9_z_center))
@@ -299,21 +299,6 @@ base_obj.select_set(True)
 bpy.context.view_layer.objects.active = base_obj
 bpy.ops.object.modifier_apply(modifier="DB9_Cutout")
 bpy.data.objects.remove(db9_cutter, do_unlink=True)
-
-# Outer DB9 Chamfer Bezel Cutter
-bpy.ops.mesh.primitive_cone_add(radius1=18.0, radius2=16.0, depth=1.2, location=(max_cx, -outer_w / 2.0 - 0.2, db9_z_center), rotation=(math.radians(90), 0, 0))
-db9_bez = bpy.context.active_object
-db9_bez.scale = (1.0, 1.0, 0.8)
-bpy.ops.object.transform_apply(scale=True)
-
-mod_db9_b = base_obj.modifiers.new(name="DB9_Bezel_Cut", type='BOOLEAN')
-mod_db9_b.operation = 'DIFFERENCE'
-mod_db9_b.object = db9_bez
-bpy.ops.object.select_all(action='DESELECT')
-base_obj.select_set(True)
-bpy.context.view_layer.objects.active = base_obj
-bpy.ops.object.modifier_apply(modifier="DB9_Bezel_Cut")
-bpy.data.objects.remove(db9_bez, do_unlink=True)
 
 # Micro-USB Cutout from the inside, leaving 0.4mm membrane on the outside
 usb_w, usb_h = 10.5, 7.5
@@ -363,6 +348,39 @@ lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
 lid_obj.data.materials.append(mat_black)
+
+# 4x Top Lid Rounded Corner Screw Bosses (Matching Base Screw Bosses)
+for i, (cx, cy) in enumerate(corner_coords):
+    cx_sign = 1 if cx > 0 else -1
+    cy_sign = 1 if cy > 0 else -1
+    px = cx_sign * (outer_l / 2.0)
+    py = cy_sign * (outer_w / 2.0)
+    
+    # Trim sharp corner block
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=(px, py, lid_z))
+    cf = bpy.context.active_object
+    cf.scale = (8.0, 8.0, lid_h + 2.0)
+    cf.rotation_euler = (0, 0, math.radians(45))
+    bpy.ops.object.transform_apply(scale=True, rotation=True)
+    
+    mod_cf = lid_obj.modifiers.new(name=f"Lid_Corner_Trim_{i+1}", type='BOOLEAN')
+    mod_cf.operation = 'DIFFERENCE'
+    mod_cf.object = cf
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier=f"Lid_Corner_Trim_{i+1}")
+    bpy.data.objects.remove(cf, do_unlink=True)
+    
+    # Add rounded cylinder boss matching bottom base screw boss
+    bpy.ops.mesh.primitive_cylinder_add(radius=4.5, depth=lid_h, location=(cx, cy, lid_z))
+    l_post = bpy.context.active_object
+    l_post.name = f"Lid_Corner_Post_{i+1}"
+    
+    mod_join = lid_obj.modifiers.new(name=f"Join_Lid_Post_{i+1}", type='BOOLEAN')
+    mod_join.operation = 'UNION'
+    mod_join.object = l_post
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier=f"Join_Lid_Post_{i+1}")
+    bpy.data.objects.remove(l_post, do_unlink=True)
 
 # Dual-Plane Recessed Center Border Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))

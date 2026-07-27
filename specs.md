@@ -96,7 +96,7 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
 * **Modern Case Aesthetics & Materials (Black & White Two-Tone)**:
   - **Main Base (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, and side accent channels.
-  - **Top Lid Body & All 4 Outer Borders (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) for the entire top lid surface and all four outer perimeter borders.
+  - **Top Lid Body & All 4 Outer Borders (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) for the entire top lid surface and all four outer perimeter borders with matching rounded $4.5\text{ mm}$ corner screw boss lobes protruding at the four corners.
   - **Symmetrical 4-Sided Inner Lining Frame (`Mat_Filament_White`)**: Pure Clean White 3D printing filament finish (`(0.90, 0.90, 0.90)`) forming a 4-sided inner accent line frame ($98.0\text{ mm} \times 72.0\text{ mm}$) positioned safely inside the 4 corner screw holes without touching or intersecting them.
   - **GLUVOK Corporate Branding (`Mat_Filament_White`)**: Pure Clean White $0.8\text{ mm}$ deep debossed `"G L U V O K"` engraving filled with White filament material at `X = 0.0 mm, Y = +26.0 mm`.
   - **Clearance Mockup PCBs (`Mat_Filament_Black`)**: High-contrast Matte Black PCB mockups for LM2596, MAX3232, and ESP32 DevKit boards.
@@ -116,7 +116,7 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
   1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -26.0 mm, Y = -45.0 mm`) for MAX3232 DB9 connector.
   2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ flat $0.4\text{ mm}$ thick knockout membrane with a $0.2\text{ mm}$ score line on the **front wall** (`X = +28.0 mm, Y = -45.0 mm`) — USB port is at the short end of the ESP32 board, centered between the two front screw holes.
 * **Internal Standoff Posts & Screw Holes**:
-  - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
+  - **Lid Mounting**: 4x M3 corner posts ($4.5\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
   - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-43.0, +32.0)` & `(-7.0, +12.0)`).
   - **MAX3232 Module**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.
   - **ESP32 Board**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.

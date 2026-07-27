@@ -8,12 +8,12 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 
 | Dimension / Property | Value | Notes |
 | :--- | :--- | :--- |
-| **Length** | `43.2 mm` | PCB length |
-| **Width** | `21.6 mm` | PCB width |
+| **Length** | `45.0 mm` | PCB length |
+| **Width** | `20.0 mm` | PCB width |
 | **Height** | `14.0 mm` | Top of potentiometer / electrolytic capacitors |
 | **Weight** | `~11 g` | Approximate module weight |
 | **Mounting Holes** | `2x M3` | 3.0 mm diameter clearance mounting holes |
-| **Mounting Hole Layout** | Diagonal | Pitch: `36.0 mm (X) x 20.0 mm (Y)` center-to-center |
+| **Mounting Hole Layout** | Diagonal (Flipped) | Pitch: `36.0 mm (X) x 20.0 mm (Y)` center-to-center |
 | **Fastener Spec** | `M3 x 6mm` | M3 machine screws / standoffs |
 | **Input Voltage Range** | `7.0V – 35V DC` | Accepts raw DC input from RS232 module power rail |
 | **Output Voltage** | `5.0V DC` | Calibrated to 5.0V output to feed ESP32 VIN pin |
@@ -27,7 +27,7 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 | **PCB Length** | `33.0 mm` | Board length only |
 | **Overall Length** | `44.0 mm` | Includes female DB9 metal connector overhang |
 | **Width** | `32.0 mm` | Board width |
-| **Height** | `15.0 mm` | Top of DB9 connector |
+| **Height** | `16.0 mm` | Top of DB9 connector |
 | **Weight** | `~12 g` | Standard board weight |
 | **Mounting Holes** | `4x M3` | 3.0 mm diameter corner mounting holes |
 | **Mounting Hole Layout** | 4 Corners | Pitch: `27.0 mm (X) x 26.0 mm (Y)` center-to-center |
@@ -91,29 +91,29 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 
 ## 6. Enclosure Design Parameters, Status LEDs & Clearance Specs
 
-* **Enclosure Inner Volume Target**: $\ge 85\text{ mm (L)} \times 65\text{ mm (W)} \times 30\text{ mm (H)}$
+* **Enclosure Inner Volume Target**: $\ge 116\text{ mm (L)} \times 86\text{ mm (W)} \times 26\text{ mm (H)}$ (Outer dimensions: $120.0\text{ mm} \times 90.0\text{ mm} \times 28.0\text{ mm}$)
 * **Wall Thickness**: $2.0\text{ mm}$ minimum (standard FDM print strength)
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
 * **Modern Case Aesthetics & Materials**:
-  - **Main Base**: Space Charcoal Anodized finish with $2.0\text{ mm}$ chamfered outer edges and 7 vertical side accent channels per side.
-  - **Top Lid**: Smoked Polycarbonate finish with $1.6\text{ mm}$ edge chamfers and hexagonal thermal ventilation grid.
+  - **Main Base**: Space Charcoal Anodized finish with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, front air intake scoops, and 7 vertical side accent channels per side.
+  - **Top Lid**: Smoked Metallic Polycarbonate finish with $1.8\text{ mm}$ edge chamfers, debossed sci-fi accent lines, and hexagonal thermal ventilation grid.
+  - **GLUVOK Corporate Branding**:
+    1. **Primary Top Logo Engraving**: $0.8\text{ mm}$ deep 3D-printed debossed/engraved `"G L U V O K"` lettering carved directly into the top lid surface centered at `X = 0.0 mm, Y = +26.0 mm`.
   - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
-* **3x Status Indicator LEDs (Top Lid Front Panel)**:
-  1. **Red LED (`Power`)**: $3.0\text{ mm}$ dome, mounted at `X = -11.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  2. **Green LED (`Status / TX`)**: $3.0\text{ mm}$ dome, mounted at `X = 0.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  3. **Blue LED (`Link / RX`)**: $3.0\text{ mm}$ dome, mounted at `X = +11.0 mm, Y = -22.0 mm` with metallic bezel ring.
-  - **Indicator Panel**: Recessed black bezel strip ($36.0\text{ mm} \times 9.0\text{ mm}$) framing all 3 LEDs.
+* **Dual Display & Status Indicators (Top Lid Front Panel)**:
+  1. **7-Segment Display (`Numeric / Status Display`)**: Standard 0.56" 1-Digit 7-segment LED module ($13.0\text{ mm} \times 19.5\text{ mm}$ rectangular cutout), mounted at `X = -10.0 mm, Y = -22.0 mm`.
+  2. **RGB LED (`System Status / Power / Link`)**: $5.0\text{ mm}$ dome ($5.2\text{ mm}$ cutout), mounted at `X = +12.0 mm, Y = -22.0 mm` with metallic bezel ring.
+  - **Indicator Panel**: Recessed black bezel strip ($42.0\text{ mm} \times 24.5\text{ mm}$) framing the 7-segment display and RGB LED cutouts.
 * **Non-Overlapping Internal Layout Zones**:
-  1. **MAX3232 Module (Front Left)**: Centered at `X = -20.0 mm, Y = -16.0 mm`. Bounding box: `[-36.0 to -4.0 mm, -32.5 to 0.5 mm]`.
-  2. **LM2596 Converter (Back Left)**: Centered at `X = -18.0 mm, Y = +18.0 mm`. Bounding box: `[-39.6 to +3.6 mm, +7.2 to +28.8 mm]`.
-  3. **ESP32 DevKit Board (Right Side)**: Centered at `X = +24.0 mm, Y = 0.0 mm`. Bounding box: `[+9.75 to +38.25 mm, -25.75 to +25.75 mm]`.
+  1. **MAX3232 Module (Front Left)**: Centered at `X = -26.0 mm, Y = -22.0 mm`. Bounding box: `[-42.0 to -10.0 mm, -38.5 to -5.5 mm]`.
+  2. **LM2596 Converter (Back Left)**: Centered at `X = -25.0 mm, Y = +22.0 mm`. Bounding box: `[-47.5 to -2.5 mm, +12.0 to +32.0 mm]`.
+  3. **ESP32 DevKit Board (Front Right)**: Centered at `X = +28.0 mm, Y = -17.25 mm`. Front edge flush with front inner wall (`Y = -43.0 mm`). Bounding box: `[+13.75 to +42.25 mm, -43.0 to +8.5 mm]`.
 * **External Cutouts Required**:
-  1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -20.0 mm, Y = -35.0 mm`) for MAX3232 DB9 connector.
-  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the right side wall (`X = +45.0 mm, Y = 0.0 mm`) for USB flashing/debugging access.
-  3. **Ventilation / Tuning Access**: Top lid potentiometer access hole centered over LM2596 (`X = -18.0 mm, Y = +18.0 mm`).
+  1. **DB9 Female Connector Cutout**: $31.5\text{ mm} \times 14.0\text{ mm}$ on the front wall (`X = -26.0 mm, Y = -45.0 mm`) for MAX3232 DB9 connector.
+  2. **ESP32 Micro-USB Port Cutout**: $10.5\text{ mm} \times 7.5\text{ mm}$ on the **front wall** (`X = +28.0 mm, Y = -45.0 mm`) — USB port is at the short end of the ESP32 board, centered between the two front screw holes.
 * **Internal Standoff Posts & Screw Holes**:
   - **Lid Mounting**: 4x M3 corner posts ($4.0\text{ mm}$ radius, $2.8\text{ mm}$ pilot hole diameter) for top lid M3 screws.
-  - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-36.0, +8.0)` & `(0.0, +28.0)`).
+  - **LM2596 Buck Converter**: 2x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at diagonal positions (`(-43.0, +32.0)` & `(-7.0, +12.0)`).
   - **MAX3232 Module**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.
   - **ESP32 Board**: 4x M3 PCB standoff posts ($3.0\text{ mm}$ radius, $4.0\text{ mm}$ height, brass insert collar) at 4 corner positions.
 * **Screw Fastener Summary (Total 14x M3 Screws)**:

@@ -356,14 +356,18 @@ lid_h = 2.8
 lid_z = outer_h + lid_h / 2.0 + 5.0  # Displayed 5mm above base
 lid_z_top = lid_z + lid_h / 2.0
 
+# Solid Top Lid Block
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z))
 lid_obj = bpy.context.active_object
 lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
+
+# Assign Material Slots: Slot 0 = Black (main body), Slot 1 = White (boundary rim)
+lid_obj.data.materials.append(mat_black)
 lid_obj.data.materials.append(mat_white)
 
-# Dual-Plane Recessed Center Border
+# Dual-Plane Recessed Center Border Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))
 top_recess = bpy.context.active_object
 top_recess.scale = (outer_l - 8.0, outer_w - 8.0, 1.0)
@@ -377,6 +381,16 @@ lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Top_Border_Recess")
 bpy.data.objects.remove(top_recess, do_unlink=True)
+
+# Assign White material (Slot 1) to outer boundary rim and all 4 inner lining walls
+inner_bound_x = (outer_l / 2.0) - 4.2
+inner_bound_y = (outer_w / 2.0) - 4.2
+
+for poly in lid_obj.data.polygons:
+    if (abs(poly.center.x) < inner_bound_x) and (abs(poly.center.y) < inner_bound_y) and (poly.normal.z > 0.5):
+        poly.material_index = 0  # Mat_Filament_Black (inner recessed top surface)
+    else:
+        poly.material_index = 1  # Mat_Filament_White (outer boundary rim & all 4 inner lining walls)
 
 # Debossed Geometric Sci-Fi Accent Lines
 for line_y in [-18.0, 18.0]:
@@ -477,15 +491,15 @@ bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
 bpy.data.objects.remove(inlay_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# GLUVOK Corporate Branding (Direct 3D Engraved Debossing into Lid)
+# GLUVOK Corporate Branding (White Text Inlay into Top Lid)
 # ---------------------------------------------------------
 # Primary Top Lid Engraving "G L U V O K"
-bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top))
+bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top - 0.3))
 txt_brand = bpy.context.active_object
-txt_brand.name = "Text_GLUVOK_Engrave"
+txt_brand.name = "Text_GLUVOK_White"
 txt_brand.data.body = "G L U V O K"
 txt_brand.data.size = 5.2
-txt_brand.data.extrude = 1.2
+txt_brand.data.extrude = 0.5
 txt_brand.data.align_x = 'CENTER'
 txt_brand.data.align_y = 'CENTER'
 
@@ -493,17 +507,36 @@ bpy.ops.object.select_all(action='DESELECT')
 txt_brand.select_set(True)
 bpy.context.view_layer.objects.active = txt_brand
 bpy.ops.object.convert(target='MESH')
+txt_brand.data.materials.append(mat_white)
 
-txt_brand.location.z = lid_z_top - 0.4
+# Cut debossed pocket in Lid for GLUVOK text
+bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top - 0.3))
+txt_cutter = bpy.context.active_object
+txt_cutter.data.body = "G L U V O K"
+txt_cutter.data.size = 5.2
+txt_cutter.data.extrude = 0.8
+txt_cutter.data.align_x = 'CENTER'
+txt_cutter.data.align_y = 'CENTER'
+bpy.ops.object.select_all(action='DESELECT')
+txt_cutter.select_set(True)
+bpy.context.view_layer.objects.active = txt_cutter
+bpy.ops.object.convert(target='MESH')
 
 mod_eng = lid_obj.modifiers.new(name="GLUVOK_Engrave", type='BOOLEAN')
 mod_eng.operation = 'DIFFERENCE'
-mod_eng.object = txt_brand
+mod_eng.object = txt_cutter
 bpy.ops.object.select_all(action='DESELECT')
 lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="GLUVOK_Engrave")
-bpy.data.objects.remove(txt_brand, do_unlink=True)
+bpy.data.objects.remove(txt_cutter, do_unlink=True)
+
+# Join White GLUVOK text mesh into lid_obj
+bpy.ops.object.select_all(action='DESELECT')
+lid_obj.select_set(True)
+txt_brand.select_set(True)
+bpy.context.view_layer.objects.active = lid_obj
+bpy.ops.object.join()
 
 # 1x 7-Segment Display Rectangular Cutout Hole (13.0mm x 19.5mm)
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, lid_z))

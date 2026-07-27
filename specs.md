@@ -96,7 +96,9 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
 * **Modern Case Aesthetics & Materials (Black & White Two-Tone)**:
   - **Main Base (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, and side accent channels.
-  - **Top Lid (`Mat_Filament_White`)**: Pure Clean White 3D printing filament finish (`(0.90, 0.90, 0.90)`) with $1.8\text{ mm}$ edge chamfers, debossed sci-fi accent lines, and hexagonal thermal ventilation grid.
+  - **Top Lid Body (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) for the main top lid recessed panel, debossed sci-fi lines, and hexagonal thermal ventilation grid.
+  - **Top Lid Outer Boundary Frame (`Mat_Filament_White`)**: Pure Clean White 3D printing filament finish (`(0.90, 0.90, 0.90)`) forming a 4.0 mm accent border rim around the top lid outer perimeter.
+  - **GLUVOK Corporate Branding (`Mat_Filament_White`)**: Pure Clean White 3D debossed `"G L U V O K"` lettering inlaid flush into the Matte Black top lid surface at `X = 0.0 mm, Y = +26.0 mm`.
   - **Clearance Mockup PCBs (`Mat_Filament_Black`)**: High-contrast Matte Black PCB mockups for LM2596, MAX3232, and ESP32 DevKit boards.
   - **Default Colored Viewport in Blender**: Viewport shading configured to `MATERIAL` preview and material `diffuse_color` mapped so the high-contrast Black and White model displays by default when opened in Blender.
   - **GLUVOK Corporate Branding**:

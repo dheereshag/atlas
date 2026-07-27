@@ -566,26 +566,14 @@ bpy.ops.object.modifier_apply(modifier="LED_Inlay_Recess")
 bpy.data.objects.remove(inlay_cutter, do_unlink=True)
 
 # ---------------------------------------------------------
-# GLUVOK Corporate Branding (White Text Inlay into Top Lid)
+# GLUVOK Corporate Branding (White-Colored Debossed Engraving into Top Lid)
 # ---------------------------------------------------------
-# Primary Top Lid Engraving "G L U V O K"
-bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top - 0.3))
-txt_brand = bpy.context.active_object
-txt_brand.name = "Text_GLUVOK_White"
-txt_brand.data.body = "G L U V O K"
-txt_brand.data.size = 5.2
-txt_brand.data.extrude = 0.5
-txt_brand.data.align_x = 'CENTER'
-txt_brand.data.align_y = 'CENTER'
+# Ensure mat_white is in lid_obj material slots so cut faces inherit white color
+if mat_white.name not in [m.name for m in lid_obj.data.materials if m]:
+    lid_obj.data.materials.append(mat_white)
 
-bpy.ops.object.select_all(action='DESELECT')
-txt_brand.select_set(True)
-bpy.context.view_layer.objects.active = txt_brand
-bpy.ops.object.convert(target='MESH')
-txt_brand.data.materials.append(mat_white)
-
-# Cut debossed pocket in Lid for GLUVOK text
-bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top - 0.3))
+# Cut 0.8mm deep debossed/engraved "G L U V O K" lettering with white interior faces directly into Top Lid
+bpy.ops.object.text_add(location=(0.0, 26.0, lid_z_top - 0.4))
 txt_cutter = bpy.context.active_object
 txt_cutter.data.body = "G L U V O K"
 txt_cutter.data.size = 5.2
@@ -596,6 +584,7 @@ bpy.ops.object.select_all(action='DESELECT')
 txt_cutter.select_set(True)
 bpy.context.view_layer.objects.active = txt_cutter
 bpy.ops.object.convert(target='MESH')
+txt_cutter.data.materials.append(mat_white)
 
 mod_eng = lid_obj.modifiers.new(name="GLUVOK_Engrave", type='BOOLEAN')
 mod_eng.operation = 'DIFFERENCE'
@@ -605,13 +594,6 @@ lid_obj.select_set(True)
 bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="GLUVOK_Engrave")
 bpy.data.objects.remove(txt_cutter, do_unlink=True)
-
-# Join White GLUVOK text mesh into lid_obj
-bpy.ops.object.select_all(action='DESELECT')
-lid_obj.select_set(True)
-txt_brand.select_set(True)
-bpy.context.view_layer.objects.active = lid_obj
-bpy.ops.object.join()
 
 # 7-Segment Display pocket cut from underside of lid, leaving 0.4mm membrane
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(seg_x, seg_panel_y, 33.2))

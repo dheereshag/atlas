@@ -94,9 +94,11 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
 * **Enclosure Inner Volume Target**: $\ge 116\text{ mm (L)} \times 86\text{ mm (W)} \times 26\text{ mm (H)}$ (Outer dimensions: $120.0\text{ mm} \times 90.0\text{ mm} \times 28.0\text{ mm}$)
 * **Wall Thickness**: $2.0\text{ mm}$ minimum (standard FDM print strength)
 * **Tolerances / Play**: $+0.5\text{ mm}$ clearance on module mounting slots and cutouts.
-* **Modern Case Aesthetics & Materials**:
-  - **Main Base**: Space Charcoal Anodized finish with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, front air intake scoops, and 7 vertical side accent channels per side.
-  - **Top Lid**: Smoked Metallic Polycarbonate finish with $1.8\text{ mm}$ edge chamfers, debossed sci-fi accent lines, and hexagonal thermal ventilation grid.
+* **Modern Case Aesthetics & Materials (Black & White Two-Tone)**:
+  - **Main Base (`Mat_Filament_Black`)**: Sleek Matte Black 3D printing filament finish (`(0.03, 0.03, 0.03)`) with $2.5\text{ mm}$ chamfered outer edges, tactical $8.0\text{ mm}$ corner chamfer facets, and side accent channels.
+  - **Top Lid (`Mat_Filament_White`)**: Pure Clean White 3D printing filament finish (`(0.90, 0.90, 0.90)`) with $1.8\text{ mm}$ edge chamfers, debossed sci-fi accent lines, and hexagonal thermal ventilation grid.
+  - **Clearance Mockup PCBs (`Mat_Filament_Black`)**: High-contrast Matte Black PCB mockups for LM2596, MAX3232, and ESP32 DevKit boards.
+  - **Default Colored Viewport in Blender**: Viewport shading configured to `MATERIAL` preview and material `diffuse_color` mapped so the high-contrast Black and White model displays by default when opened in Blender.
   - **GLUVOK Corporate Branding**:
     1. **Primary Top Logo Engraving**: $0.8\text{ mm}$ deep 3D-printed debossed/engraved `"G L U V O K"` lettering carved directly into the top lid surface centered at `X = 0.0 mm, Y = +26.0 mm`.
   - **Base Feet**: 4x non-slip rubber base pads ($4.5\text{ mm}$ radius) under bottom corners.
@@ -121,3 +123,11 @@ Quick reference guide for mechanical dimensions, system power architecture, pin 
   - 2x M3 x 6mm screws for LM2596 module
   - 4x M3 x 6mm screws for MAX3232 module
   - 4x M3 x 6mm screws for ESP32 module
+
+---
+
+## 7. Generated Output Files
+
+1. **`main.blend`**: Complete combined 3D assembly scene (Enclosure Base + Top Lid + PCB Clearance Mockups).
+2. **`enclosure_base.blend`**: Isolated 3D model containing only the Enclosure Base component.
+3. **`enclosure_top_lid.blend`**: Isolated 3D model containing only the Enclosure Top Lid component.

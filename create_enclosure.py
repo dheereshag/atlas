@@ -13,6 +13,7 @@ Features advanced 3D-printable industrial design geometry:
 import socket
 import json
 import sys
+import os
 
 BLENDER_ENCLOSURE_SCRIPT = """
 import bpy
@@ -20,33 +21,50 @@ import os
 import math
 
 # ---------------------------------------------------------
-# 0. Clean Existing Scene
+# 0. Clear Existing Scene (Clear Canvas)
 # ---------------------------------------------------------
 bpy.ops.object.select_all(action='SELECT')
 bpy.ops.object.delete(use_global=False)
 
-for collection in [bpy.data.meshes, bpy.data.materials]:
+# Clean up orphaned data blocks (meshes, materials, lights, cameras, curves)
+for collection in [bpy.data.meshes, bpy.data.materials, bpy.data.lights, bpy.data.cameras, bpy.data.curves]:
     for block in list(collection):
         if block.users == 0:
             collection.remove(block)
 
 # ---------------------------------------------------------
-# Single Uniform 3D Printing Filament Material
+# Dual 3D Printing Filament Materials (Black & White)
 # ---------------------------------------------------------
-def get_3d_print_material():
-    mat_name = "Mat_3D_Print_Filament"
+def get_material_black():
+    mat_name = "Mat_Filament_Black"
     mat = bpy.data.materials.get(mat_name)
     if not mat:
         mat = bpy.data.materials.new(name=mat_name)
         mat.use_nodes = True
+        mat.diffuse_color = (0.03, 0.03, 0.03, 1.0)
         bsdf = mat.node_tree.nodes.get('Principled BSDF')
         if bsdf:
-            bsdf.inputs['Base Color'].default_value = (0.18, 0.20, 0.24, 1.0)
+            bsdf.inputs['Base Color'].default_value = (0.03, 0.03, 0.03, 1.0)
             if 'Roughness' in bsdf.inputs:
                 bsdf.inputs['Roughness'].default_value = 0.35
     return mat
 
-mat_filament = get_3d_print_material()
+def get_material_white():
+    mat_name = "Mat_Filament_White"
+    mat = bpy.data.materials.get(mat_name)
+    if not mat:
+        mat = bpy.data.materials.new(name=mat_name)
+        mat.use_nodes = True
+        mat.diffuse_color = (0.90, 0.90, 0.90, 1.0)
+        bsdf = mat.node_tree.nodes.get('Principled BSDF')
+        if bsdf:
+            bsdf.inputs['Base Color'].default_value = (0.90, 0.90, 0.90, 1.0)
+            if 'Roughness' in bsdf.inputs:
+                bsdf.inputs['Roughness'].default_value = 0.35
+    return mat
+
+mat_black = get_material_black()
+mat_white = get_material_white()
 
 # ---------------------------------------------------------
 # Enclosure Specs (in mm)
@@ -70,7 +88,7 @@ base_obj = bpy.context.active_object
 base_obj.name = "Enclosure_Base"
 base_obj.scale = (outer_l, outer_w, outer_h)
 bpy.ops.object.transform_apply(scale=True)
-base_obj.data.materials.append(mat_filament)
+base_obj.data.materials.append(mat_black)
 
 # Inner Cavity Cutter
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, floor_t + inner_h / 2.0 + 0.1))
@@ -343,7 +361,7 @@ lid_obj = bpy.context.active_object
 lid_obj.name = "Enclosure_Top_Lid"
 lid_obj.scale = (outer_l, outer_w, lid_h)
 bpy.ops.object.transform_apply(scale=True)
-lid_obj.data.materials.append(mat_filament)
+lid_obj.data.materials.append(mat_white)
 
 # Dual-Plane Recessed Center Border
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(0, 0, lid_z_top - 0.4))
@@ -568,7 +586,7 @@ m_max = bpy.context.active_object
 m_max.name = "Mockup_MAX3232_PCB"
 m_max.scale = (32.0, 33.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
-m_max.data.materials.append(mat_filament)
+m_max.data.materials.append(mat_black)
 cut_pcb_screw_holes(m_max, max_coords, pcb_z_center)
 
 db9_height = 16.0
@@ -578,7 +596,7 @@ m_db9 = bpy.context.active_object
 m_db9.name = "Mockup_DB9_Header"
 m_db9.scale = (31.0, 11.0, db9_height)
 bpy.ops.object.transform_apply(scale=True)
-m_db9.data.materials.append(mat_filament)
+m_db9.data.materials.append(mat_white)
 
 # LM2596 Buck Converter Mockup
 bpy.ops.mesh.primitive_cube_add(size=1.0, location=(lm_cx, lm_cy, pcb_z_center))
@@ -586,7 +604,7 @@ m_lm = bpy.context.active_object
 m_lm.name = "Mockup_LM2596_PCB"
 m_lm.scale = (45.0, 20.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
-m_lm.data.materials.append(mat_filament)
+m_lm.data.materials.append(mat_black)
 cut_pcb_screw_holes(m_lm, lm_coords, pcb_z_center)
 
 # ESP32 DevKit V1 Board Mockup
@@ -595,14 +613,86 @@ m_esp = bpy.context.active_object
 m_esp.name = "Mockup_ESP32_PCB"
 m_esp.scale = (28.0, 50.0, pcb_thickness)
 bpy.ops.object.transform_apply(scale=True)
-m_esp.data.materials.append(mat_filament)
+m_esp.data.materials.append(mat_black)
 cut_pcb_screw_holes(m_esp, esp_coords, pcb_z_center)
 
 bpy.ops.object.select_all(action='DESELECT')
 
+# ---------------------------------------------------------
+# Configure 3D Viewport Shading to Display Colored Materials by Default
+# ---------------------------------------------------------
+for screen in bpy.data.screens:
+    for area in screen.areas:
+        if area.type == 'VIEW_3D':
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    space.shading.type = 'MATERIAL'
+                    space.shading.color_type = 'MATERIAL'
+
+# ---------------------------------------------------------
+# 6. Save Main Assembly & Separate Components (Base & Lid)
+# ---------------------------------------------------------
+# Disable automatic .blend1 backup files in Blender preferences
+try:
+    bpy.context.preferences.filepaths.save_versions = 0
+except Exception:
+    pass
+
+main_blend_path = r"__TARGET_BLEND_FILE__"
+if main_blend_path == "__TARGET_BLEND_FILE__" or not main_blend_path.endswith(".blend"):
+    main_blend_path = os.path.join(os.path.expanduser("~"), "Downloads", "atlas", "main.blend")
+
+main_blend_path = os.path.abspath(main_blend_path)
+dir_path = os.path.dirname(main_blend_path)
+
+base_blend_path = os.path.join(dir_path, "enclosure_base.blend")
+lid_blend_path = os.path.join(dir_path, "enclosure_top_lid.blend")
+
+# Step 1: Save full assembly to main.blend
+bpy.ops.wm.save_as_mainfile(filepath=main_blend_path)
+
+# Step 2: Create enclosure_base.blend (Contains ONLY Enclosure_Base)
+bpy.ops.object.select_all(action='DESELECT')
+for obj in list(bpy.data.objects):
+    if obj.name != "Enclosure_Base":
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+for collection in [bpy.data.meshes, bpy.data.materials]:
+    for block in list(collection):
+        if block.users == 0:
+            collection.remove(block)
+
+bpy.ops.wm.save_as_mainfile(filepath=base_blend_path)
+
+# Step 3: Re-open main.blend and create enclosure_top_lid.blend (Contains ONLY Enclosure_Top_Lid)
+bpy.ops.wm.open_mainfile(filepath=main_blend_path)
+bpy.ops.object.select_all(action='DESELECT')
+for obj in list(bpy.data.objects):
+    if obj.name != "Enclosure_Top_Lid":
+        bpy.data.objects.remove(obj, do_unlink=True)
+
+for collection in [bpy.data.meshes, bpy.data.materials]:
+    for block in list(collection):
+        if block.users == 0:
+            collection.remove(block)
+
+bpy.ops.wm.save_as_mainfile(filepath=lid_blend_path)
+
+# Step 4: Reload main.blend so Blender leaves open the full assembly
+bpy.ops.wm.open_mainfile(filepath=main_blend_path)
+
+for screen in bpy.data.screens:
+    for area in screen.areas:
+        if area.type == 'VIEW_3D':
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    space.shading.type = 'MATERIAL'
+                    space.shading.color_type = 'MATERIAL'
+
 result = {
     "status": "success",
-    "message": "Futuristic enclosure geometry generated with chamfered DB9 & Micro-USB port bezels, rear aero-vents, sci-fi debossed lid accents, counter-bored M3 screw sockets, 1x 0.56-inch 7-segment display cutout, and 1x 5.2mm RGB LED cutout.",
+    "message": "Futuristic enclosure geometry generated. Saved main assembly (main.blend), isolated enclosure base (enclosure_base.blend), and isolated top lid (enclosure_top_lid.blend).",
+    "saved_files": [main_blend_path, base_blend_path, lid_blend_path],
     "remaining_objects_count": len(bpy.data.objects)
 }
 """
@@ -613,9 +703,13 @@ def send_to_blender_mcp(host: str = "127.0.0.1", port: int = 9876):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((host, port))
             
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            target_blend_path = os.path.join(script_dir, "main.blend")
+            executable_code = BLENDER_ENCLOSURE_SCRIPT.replace("__TARGET_BLEND_FILE__", target_blend_path)
+
             payload = json.dumps({
                 "type": "execute",
-                "code": BLENDER_ENCLOSURE_SCRIPT,
+                "code": executable_code,
                 "strict_json": False
             }).encode("utf-8") + b"\0"
             
@@ -634,6 +728,15 @@ def send_to_blender_mcp(host: str = "127.0.0.1", port: int = 9876):
             response = json.loads(response_data.decode("utf-8"))
             print("Blender MCP Server Response:")
             print(json.dumps(response, indent=2))
+            
+            # Remove any auto-generated .blend1 backup files
+            for backup_name in ["main.blend1", "enclosure_base.blend1", "enclosure_top_lid.blend1", "Untitled.blend1", "untitled.blend1"]:
+                backup_path = os.path.join(script_dir, backup_name)
+                if os.path.exists(backup_path):
+                    try:
+                        os.remove(backup_path)
+                    except Exception:
+                        pass
             
     except ConnectionRefusedError:
         print(f"Error: Could not connect to Blender MCP server at {host}:{port}.")

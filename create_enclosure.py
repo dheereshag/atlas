@@ -470,8 +470,31 @@ bpy.context.view_layer.objects.active = lid_obj
 bpy.ops.object.modifier_apply(modifier="Bevel_Lid")
 
 # 4x Lid Corner Screw Holes with Flush Counter-Bore Sockets
+# Each hole has a 45-degree lead-in chamfer on the BOTTOM face so the lid can be
+# printed face-down without bridging: the chamfer grows from 0 to full radius over
+# 1.6 mm of height, making every layer self-supported by the layer below it.
 for cx, cy in corner_coords:
-    # Through-hole
+    lid_z_bot = lid_z - lid_h / 2.0  # Z coordinate of the bottom face of the lid
+
+    # Bottom-face lead-in chamfer cone (45°, depth = hole radius = 1.6 mm)
+    # radius1 (wide end, at z = lid_z_bot + 1.6) = 1.6, radius2 (tip, at z = lid_z_bot) = 0
+    chamfer_depth = 1.6  # equals hole radius → true 45° self-supporting chamfer
+    chamfer_z = lid_z_bot + chamfer_depth / 2.0
+    bpy.ops.mesh.primitive_cone_add(
+        radius1=1.6, radius2=0.0, depth=chamfer_depth,
+        location=(cx, cy, chamfer_z)
+    )
+    chamfer_cone = bpy.context.active_object
+    mod_ch = lid_obj.modifiers.new(name="Chamfer_Lead_In", type='BOOLEAN')
+    mod_ch.operation = 'DIFFERENCE'
+    mod_ch.object = chamfer_cone
+    bpy.ops.object.select_all(action='DESELECT')
+    lid_obj.select_set(True)
+    bpy.context.view_layer.objects.active = lid_obj
+    bpy.ops.object.modifier_apply(modifier="Chamfer_Lead_In")
+    bpy.data.objects.remove(chamfer_cone, do_unlink=True)
+
+    # Through-hole (starts above the chamfer tip, full-radius cylinder)
     bpy.ops.mesh.primitive_cylinder_add(radius=1.6, depth=lid_h + 1.0, location=(cx, cy, lid_z))
     sc_hole = bpy.context.active_object
     
@@ -484,7 +507,7 @@ for cx, cy in corner_coords:
     bpy.ops.object.modifier_apply(modifier="Screw_Hole")
     bpy.data.objects.remove(sc_hole, do_unlink=True)
     
-    # Counter-bore chamfer socket for flush M3 head
+    # Counter-bore chamfer socket for flush M3 head (top side)
     bpy.ops.mesh.primitive_cylinder_add(radius=3.0, depth=1.2, location=(cx, cy, lid_z_top - 0.6))
     cb_socket = bpy.context.active_object
     mod_cb = lid_obj.modifiers.new(name="CB_Socket", type='BOOLEAN')
